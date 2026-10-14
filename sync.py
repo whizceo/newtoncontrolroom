@@ -70,7 +70,7 @@ def soft(fn, default=None):
     """Optional sub-call: a failure here leaves that panel empty instead of failing the whole source."""
     try:
         return fn()
-    except (urllib.error.URLError, KeyError, ValueError, TypeError, AttributeError, IndexError) as e:
+    except (OSError, KeyError, ValueError, TypeError, AttributeError, IndexError) as e:
         print(f"  soft-fail {getattr(fn, '__name__', 'call')}: {str(e)[:120]}")
         return default
 
@@ -416,7 +416,7 @@ def main():
         try:
             data[name] = {**job(), "connected": True, "synced_at": now_iso()}
             log.append(f"{name}: ok")
-        except (urllib.error.URLError, KeyError, ValueError, TypeError) as e:
+        except (OSError, KeyError, ValueError, TypeError) as e:
             last = prev.get(name) if (prev.get(name) or {}).get("connected") else None
             data[name] = {**(last or base[name]), "connected": bool(last), "error": str(e)[:200]}
             log.append(f"{name}: FAILED ({e}), kept {'last good' if last else 'baseline'}")
