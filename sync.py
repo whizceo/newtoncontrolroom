@@ -70,7 +70,7 @@ def soft(fn, default=None):
     """Optional sub-call: a failure here leaves that panel empty instead of failing the whole source."""
     try:
         return fn()
-    except (OSError, KeyError, ValueError, TypeError, AttributeError, IndexError) as e:
+    except (urllib.error.URLError, KeyError, ValueError, TypeError, AttributeError, IndexError) as e:
         print(f"  soft-fail {getattr(fn, '__name__', 'call')}: {str(e)[:120]}")
         return default
 
@@ -204,12 +204,13 @@ def ghl(key, loc):
             page += 1
 
     result, activity = {"status": "live"}, []
-    for key_, word in (("seller", "seller"), ("deal", "deal")):
-        p = pick(word)
+    # "Deal Pipeline" was renamed "Buyer Pipeline" in GHL on 12 Oct; keep the old name as fallback.
+    for key_, words in (("seller", ("seller",)), ("deal", ("buyer", "deal"))):
+        p = next((x for x in map(pick, words) if x), None)
         if not p:
             continue
         stages = sorted(p["stages"], key=lambda s: s.get("position", 0))
-        rows = {s["id"]: {"stage": s["name"], "count": 0, "value": 0} for s in stages}
+        rows = {s["id"]: {"stage": s["name"], "color": s.get("color"), "count": 0, "value": 0} for s in stages}
         for o in opps(p["id"]):
             if o.get("status") not in ("open", "won"):
                 continue
@@ -416,7 +417,7 @@ def main():
         try:
             data[name] = {**job(), "connected": True, "synced_at": now_iso()}
             log.append(f"{name}: ok")
-        except (OSError, KeyError, ValueError, TypeError) as e:
+        except (urllib.error.URLError, KeyError, ValueError, TypeError) as e:
             last = prev.get(name) if (prev.get(name) or {}).get("connected") else None
             data[name] = {**(last or base[name]), "connected": bool(last), "error": str(e)[:200]}
             log.append(f"{name}: FAILED ({e}), kept {'last good' if last else 'baseline'}")
