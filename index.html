@@ -647,8 +647,8 @@ function pPipeline() {
     ${panel({span: 5, title: 'Marketing pipeline', sub: 'Inbound from content and forms', src: 'ghl', body: (g.marketing || []).length ? (sum(g.marketing, 'count') ? '<div class="ch" id="pl-mkt" style="height:300px"></div>' : `<div style="height:250px">${empty('No inbound opportunities yet', 'Marketing pipeline · all stages at 0')}</div>`) : empty('Appears once the Marketing pipeline syncs', 'GET /opportunities/search')})}
   </div>`;
   const draw = () => {
-    bars3d($('#pl-seller'), seller.map((s, k) => ({label: s.stage, value: s.count, color: mix(C.sig, C.gold, k / Math.max(1, seller.length - 1))})));
-    bars3d($('#pl-deal'), deal.map((s, k) => ({label: s.stage, value: s.count, color: mix(C.amber, C.gold, k / Math.max(1, deal.length - 1))})));
+    bars3d($('#pl-seller'), seller.map((s, k) => ({label: s.stage, value: s.count, color: s.color || mix(C.sig, C.gold, k / Math.max(1, seller.length - 1))})));
+    bars3d($('#pl-deal'), deal.map((s, k) => ({label: s.stage, value: s.count, color: s.color || mix(C.amber, C.gold, k / Math.max(1, deal.length - 1))})));
     const o = g.outreach || [], mk = g.marketing || [];
     if ($('#pl-out')) hbarsEl($('#pl-out'), o);
     if ($('#pl-mkt')) bars3d($('#pl-mkt'), mk.map((s, k) => ({label: s.stage, value: s.count, color: mix(C.amber, C.gold, k / Math.max(1, mk.length - 1))})));
