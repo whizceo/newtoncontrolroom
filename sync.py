@@ -449,6 +449,9 @@ def main():
     out = {"generated_at": now_iso(), "client": "Issac Newton", "brokerage": "eXp Commercial",
            "machine_live_since": manual.get("machine_live_since"),
            **data, "list": manual["list"], "content": manual["content"], "website": manual["website"]}
+    # One password for Issac: the CRM login rides inside the sealed blob, so the site gate also opens the CRM.
+    if os.getenv("CRM_LOGIN_EMAIL") and os.getenv("CRM_LOGIN_PASSWORD"):
+        out["crm_login"] = {"email": os.environ["CRM_LOGIN_EMAIL"], "password": os.environ["CRM_LOGIN_PASSWORD"]}
     blob = json.dumps(out, indent=1, ensure_ascii=False)
     OUT.write_text(blob)
     if pw:

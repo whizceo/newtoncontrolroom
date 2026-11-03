@@ -58,6 +58,10 @@ const CRM = (() => {
     if (!CRM_CFG.url || !CRM_CFG.anon) { body.innerHTML = empty('CRM backend not connected yet', 'scripts/issac/crm/deploy.py'); return }
     if (!sb) sb = window.supabase.createClient(CRM_CFG.url, CRM_CFG.anon);
     const {data: {session}} = await sb.auth.getSession();
+    if (!session && typeof D !== 'undefined' && D && D.crm_login) {
+      const {error} = await sb.auth.signInWithPassword(D.crm_login);  // the site password already let him in
+      if (!error) return draw();
+    }
     if (!session) return login(body);
     if (!Object.keys(stages).length) {
       const {data, error} = await sb.from('stages').select('*').order('pos');

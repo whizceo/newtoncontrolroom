@@ -27,6 +27,8 @@ jobs:
           DASH_PASSWORD: ${{ secrets.DASH_PASSWORD }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CRM_LOGIN_EMAIL: ${{ secrets.CRM_LOGIN_EMAIL }}
+          CRM_LOGIN_PASSWORD: ${{ secrets.CRM_LOGIN_PASSWORD }}
         run: python sync.py
       - name: Commit if changed
         run: |
