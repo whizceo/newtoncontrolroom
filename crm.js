@@ -92,6 +92,12 @@ const CRM = (() => {
 #crm .card small{color:var(--mute);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #crm .card .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font:10px var(--mono);color:var(--mute)}
 #crm .card .val{color:#ffd2c0;font-size:11px;text-shadow:0 0 10px rgba(228,43,12,.9)}
+#crm .gold{display:flex;flex-direction:column;gap:8px;max-height:330px;overflow:auto}
+#crm .gr{display:grid;grid-template-columns:minmax(0,1fr) auto 92px;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;cursor:pointer;background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.01));border:1px solid var(--line);transition:transform .15s,border-color .15s,box-shadow .15s}
+#crm .gr:hover{transform:translateX(3px);border-color:rgba(255,150,110,.45);box-shadow:0 0 22px -8px rgba(228,43,12,.7)}
+#crm .gr.top{border-color:rgba(255,195,138,.55);background:linear-gradient(160deg,rgba(255,195,138,.14),rgba(228,43,12,.05));box-shadow:0 0 26px -10px rgba(255,195,138,.8)}
+#crm .gr .who b,#crm .gr .who small{display:block}#crm .gr .who small{color:var(--mute);font-size:11.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#crm .gr .who>div{min-width:0}#crm .gr .gv{text-align:right}#crm .gr .gv b{font:500 15px var(--sans);color:#ffd9b8;text-shadow:0 0 14px rgba(255,120,80,.6)}
+#crm .gr .gv i{display:block;height:3px;margin:6px 0 0 auto;border-radius:3px;background:linear-gradient(90deg,#e42b0c,#ffc38a);box-shadow:0 0 8px rgba(255,120,80,.7)}
 #crm .track{height:250px}#crm .track svg{width:100%;height:100%;display:block;overflow:visible}
 #crm .track .flow{animation:crmflow 2.2s linear infinite}@keyframes crmflow{to{stroke-dashoffset:-32}}
 #crm .track text.sn{font:9px var(--mono);letter-spacing:.06em;fill:var(--mute);text-transform:uppercase}
@@ -227,6 +233,7 @@ const CRM = (() => {
     v.innerHTML = `<div class="g">
       <div class="s12 kpis k4">${kpi(pipe === 'seller' ? 'Owners in pipeline' : 'Buyers in pipeline', open.length, `${deals.length - open.length} marked lost`)}${kpi('Property value', val ? money(val) : '—', valued ? `county-appraised · ${valued} of ${open.length} owners` : 'no appraised value yet')}${kpi(pipe === 'seller' ? 'Call booked or further' : 'Qualified or further', booked, pctf(booked, open.length, 0) + ' of the pipeline')}${kpi(pipe === 'seller' ? 'Signed / live' : 'Clear to close / closed', won, stale ? `${stale} untouched for ${STALE_D}+ days` : 'nothing stale', {accent: stale})}</div>
       ${waiting.length ? `<div class="s12 wait"><b>${waiting.length} ${waiting.length === 1 ? 'owner is' : 'owners are'} waiting on your reply</b>${waiting.map(x => `<button data-c="${x.id}" class="${x.hours_waiting > LATE_H ? 'late' : ''}">${esc(name(x))} · ${wait(x.hours_waiting)}</button>`).join('')}</div>` : ''}
+      ${val ? panel({span: 12, title: 'The value on the table', sub: 'One building per open owner · height = county-appraised market value · tap a building to open the owner', body: `<div class="hero"><div><div class="kl">Property value in play</div><div class="hv">${money(val)}</div><div class="ks">Real county-appraised market value of the properties behind your ${valued} valued ${valued === 1 ? 'owner' : 'owners'}. ${open.length - valued ? `${open.length - valued} still pending a county match.` : ''}</div>${(t => t ? `<div class="hl">Tallest: ${esc(name(t.contacts))} · ${money(+t.value_estimate)}<br>Average: ${money(val / valued)} per owner</div>` : '')(open.slice().sort((a, b) => (+b.value_estimate || 0) - (+a.value_estimate || 0))[0])}</div><div class="city">${city(open)}</div></div>`}) : ''}
       ${panel({span: 12, title: 'Where every owner stands', sub: 'One pillar per stage · height = owners at that stage · glow = property value', body: `<div class="track">${track(stages[pipe], by)}</div>`})}
       <div class="s12"><div class="tb glass"><div class="seg"><button data-p="seller" class="${pipe === 'seller' ? 'on' : ''}">Sellers</button><button data-p="buyer" class="${pipe === 'buyer' ? 'on' : ''}">Buyers</button></div>
         <input type="search" id="crm-kq" placeholder="Filter cards by name or business" value="${esc(kbq)}"><span class="hint">Drag a card to move it · tap to open</span></div>
@@ -236,7 +243,7 @@ const CRM = (() => {
         ${list.length ? '' : '<div class="kempty"><i></i>No one here yet</div>'}${list.sort((a, b) => !!a.lost_reason - !!b.lost_reason || new Date(b.updated_at) - new Date(a.updated_at)).map(card).join('')}</div>` }).join('')}</div></div></div>`;
     v.querySelectorAll('.glass').forEach((e, i) => e.style.animationDelay = i * 30 + 'ms');
     v.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { pipe = b.dataset.p; pipeline() });
-    v.querySelectorAll('.wait [data-c]').forEach(b => b.onclick = () => open(b.dataset.c));
+    v.querySelectorAll('.wait [data-c], .city [data-c]').forEach(b => b.onclick = () => open(b.dataset.c));
     const filter = () => v.querySelectorAll('.card').forEach(c => c.style.display = !kbq || c.dataset.s.includes(kbq.toLowerCase()) ? '' : 'none');
     v.querySelector('#crm-kq').oninput = e => { kbq = e.target.value; filter() };
     filter();
@@ -264,6 +271,47 @@ const CRM = (() => {
       <div class="meta"><span>${d.next_action_at ? '→ ' + when(d.next_action_at) : `<span class="${!d.lost_reason && idle > STALE_D * 24 ? 'late' : ''}">${wait(idle)} here</span>`}</span><span class="val">${d.value_estimate ? money(+d.value_estimate) : ''}</span></div></div>` };
   const orb = c => `<span class="orb ${esc(c.owner_type || '')}">${esc(name(c).split(/\s+/).filter(w => /^[A-Za-z]/.test(w)).map(w => w[0]).filter((x, i, a) => i === 0 || i === a.length - 1).join('').toUpperCase() || '·')}</span>`;
   const fit = f => f == null ? '<span class="hint">—</span>' : `<span class="fit"><svg viewBox="0 0 26 26"><circle class="tr" cx="13" cy="13" r="10" fill="none" stroke-width="2.5"/><circle class="arc" cx="13" cy="13" r="10" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="${(62.83 * Math.min(100, f) / 100).toFixed(1)} 62.83"/></svg>${f}</span>`;
+
+  /* value skyline: one lit building per open deal, height = county-appraised value, tallest in the middle; no value = wireframe lot */
+  function city(deals) {
+    const id = 'ct' + Math.random().toString(36).slice(2, 7), G = 300, ds = deals.slice().sort((a, b) => (+b.value_estimate || 0) - (+a.value_estimate || 0));
+    const order = []; ds.forEach((d, i) => i % 2 ? order.push(d) : order.unshift(d));  // tallest centre, smaller to the sides
+    const n = order.length, maxV = Math.max(1, ...ds.map(d => +d.value_estimate || 0)), step = n > 1 ? Math.min(118, 840 / (n - 1)) : 0, x0 = 500 - step * (n - 1) / 2;
+    const short = c => { const w = name(c).split(/\s+/); return w.length > 1 ? w[0] + ' ' + w[w.length - 1][0] + '.' : w[0] || '' };
+    const bld = order.map((d, i) => ({d, x: x0 + i * step, y: G + (i % 2 ? 16 : 0), v: +d.value_estimate || 0})).sort((a, b) => a.y - b.y);
+    return `<svg viewBox="0 0 1000 380" preserveAspectRatio="xMidYMid meet"><defs>${glowF(id + 'g', 6)}
+      <linearGradient id="${id}L" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ff6a3d"/><stop offset="1" stop-color="#4a0e04"/></linearGradient>
+      <linearGradient id="${id}R" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#b8260a"/><stop offset="1" stop-color="#1e0602"/></linearGradient>
+      <linearGradient id="${id}T" x1="0" x2="1"><stop offset="0" stop-color="#ffd9b8"/><stop offset="1" stop-color="#ff8a5c"/></linearGradient>
+      <radialGradient id="${id}F"><stop offset="0" stop-color="#e42b0c" stop-opacity=".45"/><stop offset="1" stop-color="#e42b0c" stop-opacity="0"/></radialGradient></defs>
+      <ellipse cx="500" cy="${G + 18}" rx="500" ry="58" fill="url(#${id}F)"/>
+      ${Array.from({length: 13}, (_, k) => `<line x1="${k * 84 - 4}" y1="${G - 30}" x2="${k * 84 - 60}" y2="${G + 70}" stroke="rgba(255,255,255,.035)"/>`).join('')}
+      ${bld.map((b, i) => { const c = b.d.contacts || {}, h = b.v ? 26 + 196 * b.v / maxV : 10, top = b.v === maxV && b.v, roof = b.y - h - 23;
+        return `<g class="b" data-c="${c.id}" data-tip="${esc(name(c))}<br>${b.v ? money(b.v) + ' county-appraised' : 'value pending a county match'}<br>${esc(b.d.stage)}">
+        ${isoBox(b.x, b.y, 64, 64, 4, {l: 'rgba(255,255,255,.04)', r: 'rgba(255,255,255,.02)', t: 'rgba(228,43,12,.14)', s: 'rgba(255,150,110,.25)'})}
+        <g class="grow" style="animation-delay:${i * 70}ms">${b.v ? isoBox(b.x, b.y - 4, 44, 44, h, {l: `url(#${id}L)`, r: `url(#${id}R)`, t: top ? '#ffc38a' : `url(#${id}T)`, s: 'rgba(255,190,160,.55)', win: i + 1})
+          : isoBox(b.x, b.y - 4, 44, 44, h, {l: 'rgba(255,255,255,.03)', r: 'rgba(255,255,255,.015)', t: 'rgba(255,255,255,.05)', s: 'rgba(255,255,255,.3)', dash: 1})}</g>
+        ${top ? `<circle cx="${b.x}" cy="${roof + 2}" r="4" fill="#fff" filter="url(#${id}g)" class="rise3"/><circle cx="${b.x}" cy="${roof + 2}" r="6" fill="none" stroke="#ffc38a" class="pulse"/>` : ''}
+        <text x="${b.x}" y="${roof - 12}" text-anchor="middle" class="cv rise3" style="${top ? 'font-size:16px;fill:#fff' : ''}">${b.v ? money(b.v) : '—'}</text>
+        <text x="${b.x}" y="${b.y + 52}" text-anchor="middle" class="cn">${esc(short(c))}</text>
+        <text x="${b.x}" y="${b.y + 64}" text-anchor="middle" class="cs">${b.v ? esc(c.owner_type || '') : 'pending'}</text></g>` }).join('')}</svg>`;
+  }
+
+  /* value pyramid: everyone on file at the base, each tier up = closer to a sale, gold on top */
+  function zig(lv) {
+    const id = 'zg' + Math.random().toString(36).slice(2, 7), bx = 220, by = 250, W = [210, 150, 100, 56], H = 34;
+    const col = [['rgba(255,255,255,.07)', 'rgba(255,255,255,.03)', 'rgba(255,255,255,.12)'], ['#6b1a0b', '#3a0d05', '#a8300f'], ['#b8260a', '#5a1206', '#ff6a3d'], [`url(#${id}L)`, '#7a3a10', '#ffc38a']];
+    return `<svg viewBox="0 0 640 340" preserveAspectRatio="xMidYMid meet"><defs>${glowF(id + 'g', 6)}
+      <linearGradient id="${id}L" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffc38a"/><stop offset="1" stop-color="#b8560f"/></linearGradient>
+      <radialGradient id="${id}F"><stop offset="0" stop-color="#e42b0c" stop-opacity=".35"/><stop offset="1" stop-color="#e42b0c" stop-opacity="0"/></radialGradient></defs>
+      <ellipse cx="${bx}" cy="${by + 8}" rx="230" ry="80" fill="url(#${id}F)"/>
+      ${lv.map((l, k) => `<g class="rise3" style="animation-delay:${k * 120}ms" data-tip="${l.l}<br>${fmt(l.v)} ${l.s}">${isoBox(bx, by, W[k], W[k], H - 4, {z: k * H, l: col[k][0], r: col[k][1], t: col[k][2], s: k === 3 ? 'rgba(255,220,180,.8)' : 'rgba(255,170,130,.35)'})}</g>`).join('')}
+      <circle cx="${bx}" cy="${by - 4 * H + 4}" r="5" fill="#fff" filter="url(#${id}g)"/><circle cx="${bx}" cy="${by - 4 * H + 4}" r="7" fill="none" stroke="#ffc38a" class="pulse"/>
+      ${lv.map((l, k) => { const zx = bx + W[k] * .866, zy = by - k * H - H / 2 + 2, ty = 300 - k * 70, prev = lv[k - 1];
+        return `<g class="rise3" style="animation-delay:${200 + k * 120}ms"><polyline points="${zx + 4},${zy} ${zx + 26},${zy} 452,${ty - 8} 462,${ty - 8}" fill="none" stroke="${k === 3 ? '#ffc38a' : 'rgba(255,150,110,.4)'}" stroke-dasharray="${k === 3 ? '' : '2 3'}"/>
+          <text x="470" y="${ty}" class="big" style="font-size:${k === 3 ? 30 : 24}px${k === 3 ? ';fill:#ffd9b8' : ''}">${fmt(l.v)}</text>
+          <text x="470" y="${ty + 16}" class="zl">${l.l.toUpperCase()}</text>${prev ? `<text x="470" y="${ty + 30}" class="zp">${pctf(l.v, prev.v, l.v / (prev.v || 1) < .01 ? 2 : 0)} of the tier below</text>` : `<text x="470" y="${ty + 30}" class="zp">${l.s}</text>`}</g>` }).join('')}</svg>`;
+  }
 
   /* stage track: one glowing pillar per stage, open deals only, height = owners, glow = appraised value */
   function track(list, by) {
@@ -295,15 +343,17 @@ const CRM = (() => {
   /* ---------- Contacts ---------- */
   async function contacts() {
     const v = V(), sel = (id, opts, cur, all) => `<select id="${id}"><option value="">${all}</option>${opts.map(([val, lab]) => `<option value="${esc(val)}" ${cur === val ? 'selected' : ''}>${esc(lab)}</option>`).join('')}</select>`;
-    v.innerHTML = `<div class="kpis k4" id="crm-ck" style="margin-bottom:14px">${kpi('Owners in the CRM', '…', '')}${kpi('Replied', '…', '')}${kpi('Positive', '…', '')}${kpi('In the pipeline', '…', '')}</div>
-      <div class="tb glass"><input type="search" id="crm-q" placeholder="Search name, business, email, city" value="${esc(q.text)}">
+    v.innerHTML = `<div class="g"><div class="s12 kpis k4" id="crm-ck">${kpi('Owners in the CRM', '…', '')}${kpi('Replied', '…', '')}${kpi('Positive', '…', '')}${kpi('In the pipeline', '…', '')}</div>
+      ${panel({span: 7, title: 'From everyone to the ones that matter', sub: 'Each tier up = owners who moved closer to a sale', body: '<div class="zig" id="crm-zig"></div>'})}
+      ${panel({span: 5, title: 'The owners worth your time', sub: 'Every open deal, biggest property value first', body: '<div class="gold" id="crm-gold"><div class="hint">Loading…</div></div>'})}
+      <div class="s12"><div class="tb glass"><input type="search" id="crm-q" placeholder="Search name, business, email, city" value="${esc(q.text)}">
         ${sel('crm-show', [['waiting', 'Waiting on you'], ['replied', 'Replied'], ['pipeline', 'In pipeline'], ['cold', 'Not interested']], q.show, 'Everyone')}
         ${sel('crm-t', ['Both', 'Business', 'Property'].map(x => [x, x]), q.type, 'All types')}
         ${sel('crm-ci', ['C1', 'C2', 'C3', 'C4'].map(x => [x, x]), q.circle, 'All circles')}
         ${sel('crm-s', stages.seller.map(s => [s.name, s.name]), q.stage, 'Any stage')}
         ${sel('crm-o', [['fit', 'Best fit first'], ['name', 'Name A–Z'], ['new', 'Newest first']], q.sort === 'reply' ? '' : q.sort, 'Latest reply first')}
         <button class="btn" id="crm-csv">Export</button><button class="btn pri" id="crm-new">+ Contact</button></div>
-      <div class="glass panel" id="crm-list"><div class="hint">Loading…</div></div>`;
+      <div class="glass panel" id="crm-list"><div class="hint">Loading…</div></div></div></div>`;
     let t;
     v.querySelector('#crm-q').oninput = e => { clearTimeout(t); t = setTimeout(() => { q.text = e.target.value; q.page = 0; list() }, 250) };
     [['#crm-t', 'type'], ['#crm-ci', 'circle'], ['#crm-s', 'stage'], ['#crm-show', 'show'], ['#crm-o', 'sort']].forEach(([s, k]) => v.querySelector(s).onchange = e => { q[k] = e.target.value || (k === 'sort' ? 'reply' : ''); q.page = 0; list() });
@@ -319,6 +369,15 @@ const CRM = (() => {
     const box = document.getElementById('crm-ck'); if (!box) return;
     box.innerHTML = kpi('Owners in the CRM', fmt(tot), 'owners on file') + kpi('Replied', fmt(rep), pctf(rep, tot) + ' wrote back') +
       kpi('Positive', fmt(pos), pctf(pos, rep, 0) + ' of replies', {accent: pos}) + kpi('In the pipeline', fmt(pip), 'open deals, buyers + sellers');
+    const z = document.getElementById('crm-zig');
+    if (z) z.innerHTML = zig([{l: 'Owners on file', v: tot, s: 'every owner in the CRM'}, {l: 'Replied', v: rep, s: 'wrote back'}, {l: 'Positive', v: pos, s: 'want to talk'}, {l: 'In the pipeline', v: pip, s: 'open deals'}]);
+    const {data} = await sb.from('deals').select('id,stage,value_estimate,contacts(id,full_name,first_name,last_name,email,company,owner_type)').is('lost_reason', null);
+    const g = document.getElementById('crm-gold'); if (!g) return;
+    const ds = (data || []).sort((a, b) => (+b.value_estimate || 0) - (+a.value_estimate || 0)), mx = Math.max(1, ...ds.map(d => +d.value_estimate || 0));
+    g.innerHTML = ds.length ? ds.map((d, i) => { const c = d.contacts || {}, v = +d.value_estimate || 0;
+      return `<div class="gr ${i ? '' : 'top'}" data-c="${c.id}"><div class="who">${orb(c)}<div><b>${esc(name(c))}</b><small>${esc(c.company || c.owner_type || '')}</small></div></div><span class="pill">${esc(d.stage)}</span><div class="gv"><b>${v ? money(v) : '—'}</b><i style="width:${100 * v / mx}%"></i></div></div>` }).join('')
+      : '<div class="hint">No open deals yet</div>';
+    g.querySelectorAll('[data-c]').forEach(r => r.onclick = () => open(r.dataset.c));
   }
 
   async function query(cols, count) {

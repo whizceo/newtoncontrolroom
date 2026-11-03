@@ -191,6 +191,18 @@ svg text.big{font-family:var(--sans);font-weight:300;fill:#fff}
 .hub{height:270px}.hub svg{width:100%;height:100%;display:block;overflow:visible}
 .hub .spin{transform-box:fill-box;transform-origin:center;animation:spin 18s linear infinite}.hub .spin.r{animation-direction:reverse;animation-duration:26s}
 @keyframes spin{to{transform:rotate(360deg)}}
+.flight{height:340px}.flight svg{width:100%;height:100%;display:block;overflow:visible}
+.flight text.fl{font:9.5px var(--mono);letter-spacing:.1em;fill:var(--mute)}.flight text.fp{font:10px var(--mono);fill:#ffb79f}
+.flight .flow{animation:flflow 1.6s linear infinite}@keyframes flflow{to{stroke-dashoffset:-22}}
+.hero{display:grid;grid-template-columns:270px minmax(0,1fr);gap:8px;align-items:center}
+.hero .kl{font:10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.hero .hv{font:200 72px/1 var(--sans);letter-spacing:-.03em;margin:12px 0 10px;background:linear-gradient(180deg,#fff 20%,#ffb08a 70%,#e42b0c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 22px rgba(228,43,12,.55))}
+.hero .ks{color:var(--mute);font-size:13px;line-height:1.5}.hero .hl{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font:11px var(--mono);color:#ffb79f;line-height:1.7}
+.city{height:380px}.city svg{width:100%;height:100%;display:block;overflow:visible}
+.city text.cn{font:10px var(--mono);letter-spacing:.05em;fill:var(--ink)}.city text.cs{font:8.5px var(--mono);letter-spacing:.06em;fill:var(--mute);text-transform:uppercase}
+.city text.cv{font:500 13px var(--sans);fill:#ffd9b8}.city g.b{cursor:pointer;transition:filter .2s}.city g.b:hover{filter:brightness(1.35) drop-shadow(0 0 12px rgba(255,120,80,.7))}
+.zig{height:330px}.zig svg{width:100%;height:100%;display:block;overflow:visible}.zig text.zl{font:9.5px var(--mono);letter-spacing:.1em;fill:var(--mute)}.zig text.zp{font:10px var(--mono);fill:#ffb79f}
+@media (max-width:900px){.hero{grid-template-columns:minmax(0,1fr)}.hero .hv{font-size:54px}.city{height:280px}.flight{height:240px}.zig{height:260px}}
 .hub text.nn{font-family:var(--sans);font-size:13px;fill:var(--ink)}.hub text.ns{font-size:9px;letter-spacing:.08em;text-transform:uppercase}
 .ih h3{font-weight:400;font-size:15px}.ih p{font:10.5px var(--mono);color:var(--mute)}
 .ih .chip{margin-left:auto}
@@ -275,7 +287,7 @@ svg text.big{font-family:var(--sans);font-weight:300;fill:#fff}
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="crm.js?v=20261103h"></script>
+<script src="crm.js?v=20261104a"></script>
 </head>
 <body>
 <div class="gate" id="gate"><form id="gf" autocomplete="on" onsubmit="return false">
@@ -322,6 +334,46 @@ const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const mix = (a, b, t) => '#' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - v) * t).toString(16).padStart(2, '0')).join('');
 const glowF = (id, sd = 4) => `<filter id="${id}" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="${sd}" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
 const grad = (id, col, a0 = 1, a1 = .15) => `<linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity="${a0}"/><stop offset="1" stop-color="${col}" stop-opacity="${a1}"/></linearGradient>`;
+
+/* isometric box around a base centre (bx,by): w runs ↘, d runs ↙, h up, o.z lifts it. o.l/o.r/o.t = face fills, o.win = lit windows */
+const isoBox = (bx, by, w, d, h, o = {}) => { const z0 = o.z || 0, s = o.s || 'rgba(255,170,130,.35)', sw = o.sw || .6, da = o.dash ? ' stroke-dasharray="3 3"' : '';
+  const P = (u, v, z) => `${(bx + (u - w / 2 - v + d / 2) * .866).toFixed(1)},${(by + (u - w / 2 + v - d / 2) * .5 - z - z0).toFixed(1)}`;
+  const q = (a, b, c, e) => `<polygon points="${a} ${b} ${c} ${e}"`;
+  let win = '';
+  if (o.win && h > 26) { const fl = Math.floor((h - 12) / 11), seed = o.win;
+    for (let f = 0; f < fl; f++) for (let j = 0; j < 3; j++) { const z1 = 8 + f * 11, lit = ((f * 7 + j * 13 + seed * 31) % 10) < 6, fill = lit ? (f % 3 ? 'rgba(255,205,160,.85)' : 'rgba(255,240,215,.95)') : 'rgba(0,0,0,.35)';
+      const a = w * (j + .25) / 3, b = w * (j + .7) / 3, c = d * (j + .25) / 3, e = d * (j + .7) / 3;
+      win += `${q(P(a, d, z1), P(b, d, z1), P(b, d, z1 + 5), P(a, d, z1 + 5))} fill="${fill}"/>${q(P(w, c, z1), P(w, e, z1), P(w, e, z1 + 5), P(w, c, z1 + 5))} fill="${fill}" opacity=".7"/>` } }
+  return `${q(P(0, d, 0), P(w, d, 0), P(w, d, h), P(0, d, h))} fill="${o.l}" stroke="${s}" stroke-width="${sw}"${da}/>${q(P(w, 0, 0), P(w, d, 0), P(w, d, h), P(w, 0, h))} fill="${o.r}" stroke="${s}" stroke-width="${sw}"${da}/>${q(P(0, 0, h), P(w, 0, h), P(w, d, h), P(0, d, h))} fill="${o.t}" stroke="${s}" stroke-width="${sw}"${da}/>${win}` };
+
+/* paper-plane flight: owners take off on the ground and climb to a positive reply */
+function flight(m) {
+  const id = uid(), G = 300, pts = [['Emails sent', m.sent, 'emails sent'], ['Delivered', m.sent - m.bounced, 'landed in an inbox'], ['Replied', m.replies, 'owners wrote back'], ['Positive', m.positive, 'owners want to talk']]
+    .map((x, i) => ({l: x[0], v: x[1], s: x[2], x: 120 + i * 253, y: 238 - i * 58}));
+  const curve = a => a.map((p, i) => i ? `C${a[i - 1].x + 110} ${a[i - 1].y} ${p.x - 110} ${p.y} ${p.x} ${p.y}` : `M${p.x} ${p.y}`).join(' ');
+  const air = curve(pts), ground = curve(pts.map(p => ({x: p.x, y: G})));
+  const plane = (dur, begin, sc, op) => `<g opacity="${op}"><g transform="scale(${sc})"><path d="M18 0L-13 -10L-6 0L-13 10Z" fill="url(#${id}w)" filter="url(#${id}g)"/><path d="M18 0L-6 0L-9 5" fill="none" stroke="#e42b0c" stroke-width="1.2"/></g><animateMotion dur="${dur}s" begin="${begin}s" repeatCount="indefinite" rotate="auto" path="${air}"/></g>`;
+  return `<svg viewBox="0 0 1000 340" preserveAspectRatio="xMidYMid meet"><defs>${glowF(id + 'g', 4)}${glowF(id + 'h', 9)}
+    <linearGradient id="${id}w" x1="0" x2="1"><stop offset="0" stop-color="#ffd1bc"/><stop offset="1" stop-color="#fff"/></linearGradient>
+    <linearGradient id="${id}a" x1="0" x2="1"><stop offset="0" stop-color="#e42b0c" stop-opacity=".25"/><stop offset="1" stop-color="#ffc38a"/></linearGradient>
+    <linearGradient id="${id}f" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e42b0c" stop-opacity=".18"/><stop offset="1" stop-color="#e42b0c" stop-opacity="0"/></linearGradient></defs>
+    <path d="M40 ${G - 18}L960 ${G - 18}L995 ${G + 30}L5 ${G + 30}Z" fill="url(#${id}f)" stroke="rgba(255,150,110,.14)"/>
+    ${Array.from({length: 11}, (_, k) => `<line x1="${40 + k * 92}" y1="${G - 18}" x2="${5 + k * 99}" y2="${G + 30}" stroke="rgba(255,255,255,.04)"/>`).join('')}
+    <path d="${ground}" fill="none" stroke="rgba(255,120,80,.28)" stroke-width="5" stroke-linecap="round" filter="url(#${id}h)"/>
+    <path d="${air} L${pts[3].x} ${G} L${pts[0].x} ${G}Z" fill="url(#${id}f)" opacity=".55"/>
+    <path d="${air}" fill="none" stroke="url(#${id}a)" stroke-width="2.4" filter="url(#${id}g)"/>
+    <path d="${air}" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1" stroke-dasharray="2 9" class="flow"/>
+    ${pts.map((p, i) => { const top = i === 3, prev = pts[i - 1];
+      return `<g data-tip="${p.l}<br>${fmt(p.v)} ${p.s}${prev ? ' · ' + pctf(p.v, prev.v) + ' of the step before' : ''}">
+      <line x1="${p.x}" y1="${p.y}" x2="${p.x}" y2="${G}" stroke="rgba(255,150,110,.35)" stroke-dasharray="2 4"/>
+      ${isoBox(p.x, G, 34, 34, 5, {l: '#5a1206', r: '#2a0803', t: top ? '#ffc38a' : '#e42b0c', s: 'rgba(255,170,130,.5)'})}
+      <circle cx="${p.x}" cy="${p.y}" r="${top ? 9 : 6}" fill="${top ? '#ffc38a' : '#fff'}" filter="url(#${id}g)"/><circle cx="${p.x}" cy="${p.y}" r="10" fill="none" stroke="${top ? '#ffc38a' : '#ff8a5c'}" class="pulse"/>
+      <text x="${p.x}" y="${p.y - 46}" text-anchor="middle" class="big rise3" style="font-size:${top ? 38 : 30}px${top ? ';fill:#ffd9b8' : ''}">${fmt(p.v)}</text>
+      <text x="${p.x}" y="${p.y - 26}" text-anchor="middle" class="fl rise3">${p.l.toUpperCase()}</text>
+      ${prev ? `<g class="rise3"><rect x="${(p.x + prev.x) / 2 - 34}" y="${(p.y + prev.y) / 2 + 12}" width="68" height="20" rx="10" fill="rgba(228,43,12,.16)" stroke="rgba(255,150,110,.45)"/><text x="${(p.x + prev.x) / 2}" y="${(p.y + prev.y) / 2 + 26}" text-anchor="middle" class="fp">↗ ${pctf(p.v, prev.v)}</text></g>` : ''}
+      <rect x="${p.x - 100}" y="0" width="200" height="${G + 30}" fill="transparent"/></g>` }).join('')}
+    ${plane(8, 0, 1, 1)}${plane(8, -4, .65, .55)}</svg>`;
+}
 
 /* ---------- source state ---------- */
 function srcState(k) {
@@ -587,6 +639,7 @@ function pEmail() {
   const byDom = {}; (i.inboxes || []).forEach(x => (byDom[x.domain] = byDom[x.domain] || []).push(x));
   const html = `<div class="g">
     <div class="s12 kpis">${kpi('Emails sent', fmt(m.sent), `${c.length} campaigns`, {id: 'e1'})}${kpi('Owners contacted', fmt(m.contacted), `of ${fmt(m.inCamp)} loaded`)}${kpi('Reply rate', pctf(m.replies, m.contacted), `${fmt(m.replies)} replies`, {id: 'e2', accent: 1})}${kpi('Positive rate', pctf(m.positive, m.replies), `${fmt(m.positive)} opportunities`)}${kpi('Bounce rate', pctf(m.bounced, m.sent, 2), `${fmt(m.bounced)} bounced`)}${kpi('Unsubscribes', fmt(m.unsub), pctf(m.unsub, m.sent, 2) + ' of sent')}</div>
+    ${panel({span: 12, title: 'The flight to a yes', sub: 'Every email takes off at the bottom · each climb = how many made it to the next step', src: 'instantly', body: `<div class="flight">${flight(m)}</div>`})}
     ${panel({span: 8, title: 'Daily send and reply volume', sub: 'Last 30 days, all Issac campaigns', src: 'instantly', body: legend([['Sent', C.sig], ['Replies (right axis)', C.gold]]) + '<div class="ch" id="em-daily" style="height:260px"></div>'})}
     ${panel({span: 4, title: 'Deliverability', sub: 'Every email sent, by outcome', body: '<div class="ch" id="em-dn" style="height:170px"></div><div class="ch" id="em-ring" style="height:130px;margin-top:10px"></div>'})}
     ${panel({span: 12, title: 'Campaigns', sub: 'One campaign per owner segment', src: 'instantly', body: `<div class="tw"><table class="tbl"><thead><tr><th>Campaign</th><th>Status</th><th class="n">Loaded</th><th>Contacted</th><th class="n">Sent</th><th class="n">Replies</th><th class="n">Reply %</th><th class="n">Positive</th><th class="n">Bounce %</th></tr></thead><tbody>${c.map(x => `<tr><td>${esc(x.name)}</td><td><span class="st ${x.status}">${x.status}</span></td><td class="n">${fmt(x.in_campaign)}</td><td><div style="display:flex;gap:10px;align-items:center">${bar(x.contacted, x.in_campaign)}<span style="font:10.5px var(--mono);color:var(--mute)">${fmt(x.contacted)}</span></div></td><td class="n">${fmt(x.sent)}</td><td class="n">${fmt(x.replies)}</td><td class="n">${pctf(x.replies, x.contacted)}</td><td class="n">${fmt(x.positive)}</td><td class="n">${pctf(x.bounced, x.sent, 2)}</td></tr>`).join('')}</tbody></table></div>`})}
