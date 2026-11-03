@@ -126,7 +126,9 @@ const CRM = (() => {
 #crm .login{max-width:380px;margin:60px auto;text-align:center}
 #crm .login input{width:100%;margin:10px 0 0}
 #crm .flash{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1a1817;border:1px solid var(--line2);border-radius:999px;padding:8px 18px;font-size:12.5px;z-index:60}
-@media(max-width:760px){#crm .row{grid-template-columns:1fr 1fr}#crm .row>:nth-child(n+3){display:none}#crm .fg{grid-template-columns:1fr}#crm .fg label.w{grid-column:auto}}`;
+@media(max-width:900px){#crm .track{height:auto;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}#crm .track::-webkit-scrollbar{display:none}#crm .track svg{width:960px;height:240px}
+  #crm .gr{grid-template-columns:minmax(0,1fr) auto}#crm .gr .pill{display:none}}
+@media(max-width:760px){#crm .row{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}#crm .row>:nth-child(n+2){display:none}#crm .row>:nth-child(5){display:block}#crm .fg{grid-template-columns:1fr}#crm .fg label.w{grid-column:auto}}`;
 
   /* ---------- shell ---------- */
   function page(v) {
@@ -233,8 +235,8 @@ const CRM = (() => {
     v.innerHTML = `<div class="g">
       <div class="s12 kpis k4">${kpi(pipe === 'seller' ? 'Owners in pipeline' : 'Buyers in pipeline', open.length, `${deals.length - open.length} marked lost`)}${kpi('Property value', val ? money(val) : '—', valued ? `county-appraised · ${valued} of ${open.length} owners` : 'no appraised value yet')}${kpi(pipe === 'seller' ? 'Call booked or further' : 'Qualified or further', booked, pctf(booked, open.length, 0) + ' of the pipeline')}${kpi(pipe === 'seller' ? 'Signed / live' : 'Clear to close / closed', won, stale ? `${stale} untouched for ${STALE_D}+ days` : 'nothing stale', {accent: stale})}</div>
       ${waiting.length ? `<div class="s12 wait"><b>${waiting.length} ${waiting.length === 1 ? 'owner is' : 'owners are'} waiting on your reply</b>${waiting.map(x => `<button data-c="${x.id}" class="${x.hours_waiting > LATE_H ? 'late' : ''}">${esc(name(x))} · ${wait(x.hours_waiting)}</button>`).join('')}</div>` : ''}
-      ${val ? panel({span: 12, title: 'The value on the table', sub: 'One building per open owner · height = county-appraised market value · tap a building to open the owner', body: `<div class="hero"><div><div class="kl">Property value in play</div><div class="hv">${money(val)}</div><div class="ks">Real county-appraised market value of the properties behind your ${valued} valued ${valued === 1 ? 'owner' : 'owners'}. ${open.length - valued ? `${open.length - valued} still pending a county match.` : ''}</div>${(t => t ? `<div class="hl">Tallest: ${esc(name(t.contacts))} · ${money(+t.value_estimate)}<br>Average: ${money(val / valued)} per owner</div>` : '')(open.slice().sort((a, b) => (+b.value_estimate || 0) - (+a.value_estimate || 0))[0])}</div><div class="city">${city(open)}</div></div>`}) : ''}
-      ${panel({span: 12, title: 'Where every owner stands', sub: 'One pillar per stage · height = owners at that stage · glow = property value', body: `<div class="track">${track(stages[pipe], by)}</div>`})}
+      ${val ? panel({span: 12, title: 'The value on the table', sub: 'One building per open owner · height = county-appraised market value · tap a building to open the owner', body: `<div class="hero"><div><div class="kl">Property value in play</div><div class="hv">${money(val)}</div><div class="ks">Real county-appraised market value of the properties behind your ${valued} valued ${valued === 1 ? 'owner' : 'owners'}. ${open.length - valued ? `${open.length - valued} still pending a county match.` : ''}</div>${(t => t ? `<div class="hl">Tallest: ${esc(name(t.contacts))} · ${money(+t.value_estimate)}<br>Average: ${money(val / valued)} per owner</div>` : '')(open.slice().sort((a, b) => (+b.value_estimate || 0) - (+a.value_estimate || 0))[0])}</div><div><div class="city">${city(open)}</div><div class="swh">← swipe to see every building →</div></div></div>`}) : ''}
+      ${panel({span: 12, title: 'Where every owner stands', sub: 'One pillar per stage · height = owners at that stage · glow = property value', body: `<div class="track">${track(stages[pipe], by)}</div><div class="swh">← swipe through the stages →</div>`})}
       <div class="s12"><div class="tb glass"><div class="seg"><button data-p="seller" class="${pipe === 'seller' ? 'on' : ''}">Sellers</button><button data-p="buyer" class="${pipe === 'buyer' ? 'on' : ''}">Buyers</button></div>
         <input type="search" id="crm-kq" placeholder="Filter cards by name or business" value="${esc(kbq)}"><span class="hint">Drag a card to move it · tap to open</span></div>
       <div class="kb">${stages[pipe].map((s, i) => { const list = by[s.name] || [], sv = sum(list.map(d => ({v: +d.value_estimate || 0})), 'v'), n = list.filter(d => !d.lost_reason).length;
@@ -242,6 +244,7 @@ const CRM = (() => {
         <div class="kbar"><i style="width:${open.length ? 100 * n / open.length : 0}%"></i></div><div class="cv">${sv ? money(sv) : ''}</div>
         ${list.length ? '' : '<div class="kempty"><i></i>No one here yet</div>'}${list.sort((a, b) => !!a.lost_reason - !!b.lost_reason || new Date(b.updated_at) - new Date(a.updated_at)).map(card).join('')}</div>` }).join('')}</div></div></div>`;
     v.querySelectorAll('.glass').forEach((e, i) => e.style.animationDelay = i * 30 + 'ms');
+    const cy = v.querySelector('.city'); if (cy) cy.scrollLeft = (cy.scrollWidth - cy.clientWidth) / 2;  // phone: start on the tallest building
     v.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { pipe = b.dataset.p; pipeline() });
     v.querySelectorAll('.wait [data-c], .city [data-c]').forEach(b => b.onclick = () => open(b.dataset.c));
     const filter = () => v.querySelectorAll('.card').forEach(c => c.style.display = !kbq || c.dataset.s.includes(kbq.toLowerCase()) ? '' : 'none');
@@ -308,7 +311,7 @@ const CRM = (() => {
       ${lv.map((l, k) => `<g class="rise3" style="animation-delay:${k * 120}ms" data-tip="${l.l}<br>${fmt(l.v)} ${l.s}">${isoBox(bx, by, W[k], W[k], H - 4, {z: k * H, l: col[k][0], r: col[k][1], t: col[k][2], s: k === 3 ? 'rgba(255,220,180,.8)' : 'rgba(255,170,130,.35)'})}</g>`).join('')}
       <circle cx="${bx}" cy="${by - 4 * H + 4}" r="5" fill="#fff" filter="url(#${id}g)"/><circle cx="${bx}" cy="${by - 4 * H + 4}" r="7" fill="none" stroke="#ffc38a" class="pulse"/>
       ${lv.map((l, k) => { const zx = bx + W[k] * .866, zy = by - k * H - H / 2 + 2, ty = 300 - k * 70, prev = lv[k - 1];
-        return `<g class="rise3" style="animation-delay:${200 + k * 120}ms"><polyline points="${zx + 4},${zy} ${zx + 26},${zy} 452,${ty - 8} 462,${ty - 8}" fill="none" stroke="${k === 3 ? '#ffc38a' : 'rgba(255,150,110,.4)'}" stroke-dasharray="${k === 3 ? '' : '2 3'}"/>
+        return `<g class="rise3 lab" style="animation-delay:${200 + k * 120}ms"><polyline points="${zx + 4},${zy} ${zx + 26},${zy} 452,${ty - 8} 462,${ty - 8}" fill="none" stroke="${k === 3 ? '#ffc38a' : 'rgba(255,150,110,.4)'}" stroke-dasharray="${k === 3 ? '' : '2 3'}"/>
           <text x="470" y="${ty}" class="big" style="font-size:${k === 3 ? 30 : 24}px${k === 3 ? ';fill:#ffd9b8' : ''}">${fmt(l.v)}</text>
           <text x="470" y="${ty + 16}" class="zl">${l.l.toUpperCase()}</text>${prev ? `<text x="470" y="${ty + 30}" class="zp">${pctf(l.v, prev.v, l.v / (prev.v || 1) < .01 ? 2 : 0)} of the tier below</text>` : `<text x="470" y="${ty + 30}" class="zp">${l.s}</text>`}</g>` }).join('')}</svg>`;
   }
@@ -370,7 +373,8 @@ const CRM = (() => {
     box.innerHTML = kpi('Owners in the CRM', fmt(tot), 'owners on file') + kpi('Replied', fmt(rep), pctf(rep, tot) + ' wrote back') +
       kpi('Positive', fmt(pos), pctf(pos, rep, 0) + ' of replies', {accent: pos}) + kpi('In the pipeline', fmt(pip), 'open deals, buyers + sellers');
     const z = document.getElementById('crm-zig');
-    if (z) z.innerHTML = zig([{l: 'Owners on file', v: tot, s: 'every owner in the CRM'}, {l: 'Replied', v: rep, s: 'wrote back'}, {l: 'Positive', v: pos, s: 'want to talk'}, {l: 'In the pipeline', v: pip, s: 'open deals'}]);
+    const lv = [{l: 'Owners on file', v: tot, s: 'every owner in the CRM'}, {l: 'Replied', v: rep, s: 'wrote back'}, {l: 'Positive', v: pos, s: 'want to talk'}, {l: 'In the pipeline', v: pip, s: 'open deals'}];
+    if (z) z.innerHTML = zig(lv) + `<div class="zigl">${lv.slice().reverse().map((l, k) => `<div class="${k ? '' : 'top'}"><b>${fmt(l.v)}</b><span>${l.l}</span><em>${l.s}</em></div>`).join('')}</div>`;  // phone: numbers as tiles under the pyramid
     const {data} = await sb.from('deals').select('id,stage,value_estimate,contacts(id,full_name,first_name,last_name,email,company,owner_type)').is('lost_reason', null);
     const g = document.getElementById('crm-gold'); if (!g) return;
     const ds = (data || []).sort((a, b) => (+b.value_estimate || 0) - (+a.value_estimate || 0)), mx = Math.max(1, ...ds.map(d => +d.value_estimate || 0));

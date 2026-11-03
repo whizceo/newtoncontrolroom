@@ -202,7 +202,18 @@ svg text.big{font-family:var(--sans);font-weight:300;fill:#fff}
 .city text.cn{font:10px var(--mono);letter-spacing:.05em;fill:var(--ink)}.city text.cs{font:8.5px var(--mono);letter-spacing:.06em;fill:var(--mute);text-transform:uppercase}
 .city text.cv{font:500 13px var(--sans);fill:#ffd9b8}.city g.b{cursor:pointer;transition:filter .2s}.city g.b:hover{filter:brightness(1.35) drop-shadow(0 0 12px rgba(255,120,80,.7))}
 .zig{height:330px}.zig svg{width:100%;height:100%;display:block;overflow:visible}.zig text.zl{font:9.5px var(--mono);letter-spacing:.1em;fill:var(--mute)}.zig text.zp{font:10px var(--mono);fill:#ffb79f}
-@media (max-width:900px){.hero{grid-template-columns:minmax(0,1fr)}.hero .hv{font-size:54px}.city{height:280px}.flight{height:240px}.zig{height:260px}}
+@media (max-width:900px){.hero{grid-template-columns:minmax(0,1fr)}.hero .hv{font-size:54px}
+  .ph{flex-wrap:wrap}.ph>div{flex:1 1 200px}.ch:has(>.dn){height:auto!important}.dn{height:auto}
+  .city,.flight,.swipe{height:auto;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .city::-webkit-scrollbar,.flight::-webkit-scrollbar,.swipe::-webkit-scrollbar{display:none}
+  .city svg{width:860px;height:327px}.flight svg{width:760px;height:258px}
+  .zig{height:auto;overflow:hidden}.zig svg{width:150%;height:auto}.zig .lab{display:none}
+  .swh{display:block}}
+.swh{display:none;text-align:center;font:9.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:6px}
+.zigl{display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}.zigl div{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+.zigl div.top{border-color:rgba(255,195,138,.55);background:linear-gradient(160deg,rgba(255,195,138,.14),rgba(228,43,12,.05))}
+.zigl b{display:block;font:300 24px var(--sans)}.zigl span{display:block;font:9px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin-top:3px}.zigl em{display:block;font:normal 10px var(--mono);color:#ffb79f;margin-top:4px}
+@media (max-width:900px){.zigl{display:grid}}
 .hub text.nn{font-family:var(--sans);font-size:13px;fill:var(--ink)}.hub text.ns{font-size:9px;letter-spacing:.08em;text-transform:uppercase}
 .ih h3{font-weight:400;font-size:15px}.ih p{font:10.5px var(--mono);color:var(--mute)}
 .ih .chip{margin-left:auto}
@@ -287,7 +298,7 @@ svg text.big{font-family:var(--sans);font-weight:300;fill:#fff}
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="crm.js?v=20261104a"></script>
+<script src="crm.js?v=20261104b"></script>
 </head>
 <body>
 <div class="gate" id="gate"><form id="gf" autocomplete="on" onsubmit="return false">
@@ -639,7 +650,7 @@ function pEmail() {
   const byDom = {}; (i.inboxes || []).forEach(x => (byDom[x.domain] = byDom[x.domain] || []).push(x));
   const html = `<div class="g">
     <div class="s12 kpis">${kpi('Emails sent', fmt(m.sent), `${c.length} campaigns`, {id: 'e1'})}${kpi('Owners contacted', fmt(m.contacted), `of ${fmt(m.inCamp)} loaded`)}${kpi('Reply rate', pctf(m.replies, m.contacted), `${fmt(m.replies)} replies`, {id: 'e2', accent: 1})}${kpi('Positive rate', pctf(m.positive, m.replies), `${fmt(m.positive)} opportunities`)}${kpi('Bounce rate', pctf(m.bounced, m.sent, 2), `${fmt(m.bounced)} bounced`)}${kpi('Unsubscribes', fmt(m.unsub), pctf(m.unsub, m.sent, 2) + ' of sent')}</div>
-    ${panel({span: 12, title: 'The flight to a yes', sub: 'Every email takes off at the bottom · each climb = how many made it to the next step', src: 'instantly', body: `<div class="flight">${flight(m)}</div>`})}
+    ${panel({span: 12, title: 'The flight to a yes', sub: 'Every email takes off at the bottom · each climb = how many made it to the next step', src: 'instantly', body: `<div class="flight">${flight(m)}</div><div class="swh">← swipe to follow the flight →</div>`})}
     ${panel({span: 8, title: 'Daily send and reply volume', sub: 'Last 30 days, all Issac campaigns', src: 'instantly', body: legend([['Sent', C.sig], ['Replies (right axis)', C.gold]]) + '<div class="ch" id="em-daily" style="height:260px"></div>'})}
     ${panel({span: 4, title: 'Deliverability', sub: 'Every email sent, by outcome', body: '<div class="ch" id="em-dn" style="height:170px"></div><div class="ch" id="em-ring" style="height:130px;margin-top:10px"></div>'})}
     ${panel({span: 12, title: 'Campaigns', sub: 'One campaign per owner segment', src: 'instantly', body: `<div class="tw"><table class="tbl"><thead><tr><th>Campaign</th><th>Status</th><th class="n">Loaded</th><th>Contacted</th><th class="n">Sent</th><th class="n">Replies</th><th class="n">Reply %</th><th class="n">Positive</th><th class="n">Bounce %</th></tr></thead><tbody>${c.map(x => `<tr><td>${esc(x.name)}</td><td><span class="st ${x.status}">${x.status}</span></td><td class="n">${fmt(x.in_campaign)}</td><td><div style="display:flex;gap:10px;align-items:center">${bar(x.contacted, x.in_campaign)}<span style="font:10.5px var(--mono);color:var(--mute)">${fmt(x.contacted)}</span></div></td><td class="n">${fmt(x.sent)}</td><td class="n">${fmt(x.replies)}</td><td class="n">${pctf(x.replies, x.contacted)}</td><td class="n">${fmt(x.positive)}</td><td class="n">${pctf(x.bounced, x.sent, 2)}</td></tr>`).join('')}</tbody></table></div>`})}
