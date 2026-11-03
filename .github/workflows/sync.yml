@@ -18,13 +18,15 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -q cryptography
-      - name: Pull Instantly + HeyReach + GHL, seal into data.enc
+      - name: Pull Instantly + Newton CRM, seal into data.enc
         env:
           INSTANTLY_API_KEY: ${{ secrets.INSTANTLY_API_KEY }}
           HEYREACH_API_KEY: ${{ secrets.HEYREACH_API_KEY }}
           GHL_API_KEY: ${{ secrets.GHL_API_KEY }}
           GHL_LOCATION_ID: ${{ secrets.GHL_LOCATION_ID }}
           DASH_PASSWORD: ${{ secrets.DASH_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python sync.py
       - name: Commit if changed
         run: |

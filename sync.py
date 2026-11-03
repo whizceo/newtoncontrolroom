@@ -352,6 +352,26 @@ def ghl(key, loc):
     return result
 
 
+def crm(url, key):
+    """NEWTON CRM (Supabase) in the same shape the dashboard reads from GHL: seller/deal stages, activity, tasks."""
+    h = {"apikey": key, "Authorization": f"Bearer {key}"}
+    base = url.rstrip("/") + "/rest/v1"
+    rows = http("GET", f"{base}/v_pipeline?select=pipeline,stage,count,value", h)
+    result = {k: [{"stage": r["stage"], "count": r["count"], "value": float(r["value"] or 0)} for r in rows if r["pipeline"] == p]
+              for k, p in (("seller", "seller"), ("deal", "buyer"))}
+    moves = http("GET", f"{base}/activities?select=at,body&type=eq.stage_change&order=at.desc&limit=8", h)
+    result["activity"] = [{"at": m["at"], "kind": "seller", "text": "A seller moved to " + m["body"].split(" → ")[-1]} for m in moves]
+    now = datetime.now(timezone.utc)
+    tasks = http("GET", f"{base}/tasks?select=due_at,done", h)
+    open_ = [t for t in tasks if not t["done"]]
+    due = [datetime.fromisoformat(t["due_at"]) for t in open_ if t["due_at"]]
+    result["tasks"] = {"open": len(open_), "due_today": sum(1 for d in due if d.date() == now.date()),
+                       "overdue": sum(1 for d in due if d < now and d.date() != now.date()), "completed_30d": sum(1 for t in tasks if t["done"])}
+    result["workflows"] = []
+    result["source"] = "crm"
+    return result
+
+
 def baseline(manual):
     b = manual["baseline"]
     return {
@@ -408,6 +428,10 @@ def main():
         "ghl": (lambda: ghl(os.environ["GHL_API_KEY"], os.environ["GHL_LOCATION_ID"]))
         if os.getenv("GHL_API_KEY") and os.getenv("GHL_LOCATION_ID") else None,
     }
+    # Cutover 30 Oct: once NEWTON CRM is live, it replaces GHL in the "ghl" slot and HeyReach is retired.
+    if os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_SERVICE_ROLE_KEY"):
+        jobs["ghl"] = lambda: crm(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
+        jobs["heyreach"] = None
     data, log = {}, []
     for name, job in jobs.items():
         if job is None:
@@ -438,6 +462,7 @@ def main():
         PAGES.mkdir(parents=True, exist_ok=True)
         shutil.copy(HERE / "index.html", PAGES / "index.html")
         shutil.copy(ENC, PAGES / "data.enc")  # never the plaintext
+        shutil.copy(HERE / "crm.js", PAGES / "crm.js")  # anon key only, RLS guards the rows
         print(f"-> {PAGES}")
 
 

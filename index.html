@@ -264,6 +264,8 @@ svg text.big{font-family:var(--sans);font-weight:300;fill:#fff}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="crm.js"></script>
 </head>
 <body>
 <div class="gate" id="gate"><form id="gf" autocomplete="on" onsubmit="return false">
@@ -828,6 +830,7 @@ const ICON = {
   email: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
   linkedin: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7"/>',
   content: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',
+  crm: '<path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/>',
   pipeline: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
   followups: '<path d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5"/>',
   contacts: '<circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21 20a6 6 0 0 0-4-5.6"/>',
@@ -842,7 +845,8 @@ const PAGES = [
   {id: 'email', label: 'Email', grp: 'Outreach', src: 'instantly', fn: pEmail},
   {id: 'linkedin', label: 'LinkedIn outreach', src: 'heyreach', fn: pLinkedin},
   // {id: 'content', label: 'LinkedIn content', src: 'content', fn: pContent},  // hidden until LinkedIn content is connected
-  {id: 'pipeline', label: 'CRM pipeline', grp: 'Revenue', src: 'ghl', fn: pPipeline},
+  {id: 'crm', label: 'CRM', grp: 'Revenue', fn: pCrm},
+  {id: 'pipeline', label: 'Pipeline numbers', src: 'ghl', fn: pPipeline},
   {id: 'followups', label: 'Follow-ups & automations', src: 'ghl', fn: pFollow},
   {id: 'calendar', label: 'Calendar', src: 'ghl', fn: pCalendar},
   {id: 'calls', label: 'Calls', src: 'ghl', fn: pCalls},
@@ -952,7 +956,14 @@ async function open_(E, key) {
   const ct = Uint8Array.from(atob(E.ct), c => c.charCodeAt(0));
   return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name: 'AES-GCM', iv: b16(E.iv)}, key, ct)));
 }
-function start(d) { $('#gate').remove(); D = DEMO ? demo(d) : d; chrome(); route() }
+function cutover() {
+  // NEWTON CRM live: it fills the "ghl" slot, GHL-only pages and LinkedIn (HeyReach retired) leave the nav
+  if ((D.ghl || {}).source !== 'crm') return;
+  NAMES.ghl = 'Newton CRM';
+  const gone = ['linkedin', 'followups', 'calendar', 'calls', 'contacts'];
+  for (let i = PAGES.length - 1; i >= 0; i--) if (gone.includes(PAGES[i].id)) PAGES.splice(i, 1);
+}
+function start(d) { $('#gate').remove(); D = DEMO ? demo(d) : d; cutover(); chrome(); route() }
 fetch('data.enc?t=' + Date.now()).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json() }).then(async E => {
   let saved = null; try { saved = localStorage.getItem('ncr_key') } catch (e) {}
   if (saved) try { return start(await open_(E, await crypto.subtle.importKey('raw', b16(saved), 'AES-GCM', false, ['decrypt']))) } catch (e) {}
