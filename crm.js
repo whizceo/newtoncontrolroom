@@ -24,6 +24,11 @@ const CRM = (() => {
   const ACT = {email_in: 'Reply', email_out: 'Sent', note: 'Note', call: 'Call', booking: 'Booking', stage_change: 'Stage', alert: 'Alert', no_show: 'No-show', bounce: 'Bounce'};
 
   const css = `
+#crm .wait{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;border:1px solid var(--sig);border-radius:14px;background:rgba(228,43,12,.1)}
+#crm .wait b{font-weight:500;margin-right:6px}
+#crm .wait button{font:12px var(--sans);color:var(--ink);background:rgba(0,0,0,.35);border:1px solid var(--line2);border-radius:999px;padding:5px 12px;cursor:pointer}
+#crm .wait button.late{border-color:var(--sig)}
+#crm .wait button:hover{border-color:var(--ink)}
 #crm .tb{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
 #crm .tb input[type=search]{flex:1;min-width:220px}
 #crm .btn{font:12px var(--sans);color:var(--ink2);background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:999px;padding:6px 14px;cursor:pointer;text-decoration:none;display:inline-block;white-space:nowrap}
@@ -179,21 +184,27 @@ const CRM = (() => {
   /* ---------- Pipeline (kanban, drag = stage change) ---------- */
   async function pipeline() {
     const v = V();
-    const {data, error} = await sb.from('deals').select('id,stage,updated_at,value_estimate,next_action,next_action_at,lost_reason,contacts(id,full_name,first_name,email,company,owner_type,circle)').eq('pipeline', pipe);
+    const [{data, error}, {data: waitingRows}] = await Promise.all([
+      sb.from('deals').select('id,stage,updated_at,value_estimate,next_action,next_action_at,lost_reason,contacts(id,full_name,first_name,email,company,owner_type,circle)').eq('pipeline', pipe),
+      sb.from('v_waiting').select('*'),
+    ]);
     if (error) { v.innerHTML = empty(error.message); return }
     const deals = data || [], open = deals.filter(d => !d.lost_reason), by = {};
     deals.forEach(d => (by[d.stage] ||= []).push(d));
-    const val = sum(open.map(d => ({v: +d.value_estimate || 0})), 'v'), weighted = open.reduce((a, d) => a + (+d.value_estimate || 0) * prob(pipe, d.stage) / 100, 0);
+    const val = sum(open.map(d => ({v: +d.value_estimate || 0})), 'v'), valued = open.filter(d => +d.value_estimate > 0).length;
+    const live = new Set(open.map(d => d.contacts && d.contacts.id)), waiting = (waitingRows || []).filter(x => live.has(x.id));  // open deals only: lost / listed elsewhere never shows
     const booked = open.filter(d => pos(pipe, d.stage) >= 2).length, last = stages[pipe].slice(-2).map(s => s.name), won = open.filter(d => last.includes(d.stage)).length;
     const stale = open.filter(d => hrs(d.updated_at) > STALE_D * 24).length;
     v.innerHTML = `<div class="g">
-      <div class="s12 kpis k4">${kpi(pipe === 'seller' ? 'Owners in pipeline' : 'Buyers in pipeline', open.length, `${deals.length - open.length} marked lost`)}${kpi('Weighted value', money(weighted), `${money(val)} before stage odds`)}${kpi(pipe === 'seller' ? 'Call booked or further' : 'Qualified or further', booked, pctf(booked, open.length, 0) + ' of the pipeline')}${kpi(pipe === 'seller' ? 'Signed / live' : 'Clear to close / closed', won, stale ? `${stale} untouched for ${STALE_D}+ days` : 'nothing stale', {accent: stale})}</div>
+      <div class="s12 kpis k4">${kpi(pipe === 'seller' ? 'Owners in pipeline' : 'Buyers in pipeline', open.length, `${deals.length - open.length} marked lost`)}${kpi('Property value', val ? money(val) : '—', valued ? `county-appraised · ${valued} of ${open.length} owners` : 'no appraised value yet')}${kpi(pipe === 'seller' ? 'Call booked or further' : 'Qualified or further', booked, pctf(booked, open.length, 0) + ' of the pipeline')}${kpi(pipe === 'seller' ? 'Signed / live' : 'Clear to close / closed', won, stale ? `${stale} untouched for ${STALE_D}+ days` : 'nothing stale', {accent: stale})}</div>
+      ${waiting.length ? `<div class="s12 wait"><b>${waiting.length} ${waiting.length === 1 ? 'owner is' : 'owners are'} waiting on your reply</b>${waiting.map(x => `<button data-c="${x.id}" class="${x.hours_waiting > LATE_H ? 'late' : ''}">${esc(name(x))} · ${wait(x.hours_waiting)}</button>`).join('')}</div>` : ''}
       <div class="s12"><div class="tb"><div class="seg"><button data-p="seller" class="${pipe === 'seller' ? 'on' : ''}">Sellers</button><button data-p="buyer" class="${pipe === 'buyer' ? 'on' : ''}">Buyers</button></div>
         <input type="search" id="crm-kq" placeholder="Filter cards by name or business" value="${esc(kbq)}"><span class="hint">Drag a card to move it · tap to open</span></div>
       <div class="kb">${stages[pipe].map(s => { const list = by[s.name] || [], sv = sum(list.map(d => ({v: +d.value_estimate || 0})), 'v');
-        return `<div class="kcol" data-stage="${esc(s.name)}"><h4><span>${esc(s.name)}</span><b>${list.length}</b></h4><div class="cv">${[sv ? money(sv) : '', s.prob ? s.prob + '% odds' : ''].filter(Boolean).join(' · ')}</div>
+        return `<div class="kcol" data-stage="${esc(s.name)}"><h4><span>${esc(s.name)}</span><b>${list.length}</b></h4><div class="cv">${sv ? money(sv) : ''}</div>
         ${list.sort((a, b) => !!a.lost_reason - !!b.lost_reason || new Date(b.updated_at) - new Date(a.updated_at)).map(card).join('')}</div>` }).join('')}</div></div></div>`;
     v.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { pipe = b.dataset.p; pipeline() });
+    v.querySelectorAll('.wait [data-c]').forEach(b => b.onclick = () => open(b.dataset.c));
     const filter = () => v.querySelectorAll('.card').forEach(c => c.style.display = !kbq || c.dataset.s.includes(kbq.toLowerCase()) ? '' : 'none');
     v.querySelector('#crm-kq').oninput = e => { kbq = e.target.value; filter() };
     filter();

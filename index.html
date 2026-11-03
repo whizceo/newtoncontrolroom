@@ -268,7 +268,7 @@ svg text.big{font-family:var(--sans);font-weight:300;fill:#fff}
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="crm.js?v=20261103e"></script>
+<script src="crm.js?v=20261103g"></script>
 </head>
 <body>
 <div class="gate" id="gate"><form id="gf" autocomplete="on" onsubmit="return false">
@@ -295,7 +295,7 @@ svg text.big{font-family:var(--sans);font-weight:300;fill:#fff}
 <div id="tip"></div>
 <script>
 const C = {sig: '#e42b0c', amber: '#ff8a3d', gold: '#ffc38a', ink: '#f3efeb', mute: '#8e8882', dim: '#55504c', ok: '#5fd39a'};
-const DEMO = new URLSearchParams(location.search).has('demo');
+const DEMO = false;  // never sample numbers: Issac sees real data only
 const API = ['instantly', 'ghl'];
 const NAMES = {instantly: 'Instantly', ghl: 'Newton CRM', content: 'LinkedIn', website: 'Website', list: 'Owner list'};
 let D = null, CUR = null;
@@ -734,45 +734,6 @@ function chrome() {
   tick(); setInterval(tick, 3e4);
 }
 
-/* sample numbers for ?demo: shows what the room looks like with the machine running */
-function demo(d) {
-  let s = 7; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
-  const dd = d.instantly.daily.map(x => x.date), ramp = i => Math.min(1, i / 8), now = new Date().toISOString(), agoH = h => new Date(Date.now() - h * 36e5).toISOString();
-  d.machine_live_since = dd[2];
-  API.forEach(k => { d[k].connected = true; d[k].synced_at = now; delete d[k].error });
-  d.instantly.status = 'live';
-  d.instantly.daily = dd.map((dt, i) => { const wd = new Date(dt + 'T12:00').getDay(), on = i > 1 && wd >= 1 && wd <= 5;
-    const sent = on ? Math.round((wd >= 2 && wd <= 4 ? 240 : 150) * ramp(i) + r() * 30) : 0; return {date: dt, sent, replies: on ? Math.round(sent * (.02 + r() * .03)) : Math.round(r() * 2)} });
-  const ts = sum(d.instantly.daily, 'sent'), rep = sum(d.instantly.daily, 'replies'), w = [.42, .38, .2];
-  d.instantly.campaigns = d.instantly.campaigns.map((c, i) => ({...c, status: 'live', in_campaign: [400, 400, 200][i], contacted: Math.round([400, 400, 200][i] * [.86, .81, .74][i]),
-    sent: Math.round(ts * w[i]), replies: Math.round(rep * w[i]), positive: Math.round(rep * w[i] * [.41, .33, .27][i]), bounced: Math.round(ts * w[i] * [.009, .012, .016][i]), unsubscribed: Math.round(ts * w[i] * .004)}));
-  d.instantly.steps = [[1, .46, .55], [2, .31, .29], [3, .23, .16]].map(([k, a, b]) => ({step: k, sent: Math.round(ts * a), replies: Math.round(rep * b)}));
-  d.instantly.inboxes = d.instantly.inboxes.map(x => ({...x, warmup: 95 + Math.round(r() * 5), ok: true}));
-  d.heyreach.status = 'live';
-  d.heyreach.daily = dd.map((dt, i) => ({date: dt, requests: i > 3 ? Math.round(18 + r() * 7) : 0, replies: i > 5 ? Math.round(r() * 4) : 0}));
-  d.heyreach.requests_sent = sum(d.heyreach.daily, 'requests'); d.heyreach.accepted = Math.round(d.heyreach.requests_sent * .31);
-  d.heyreach.messages_sent = Math.round(d.heyreach.accepted * .94); d.heyreach.replies = sum(d.heyreach.daily, 'replies'); d.heyreach.profile_views = 214;
-  d.heyreach.campaigns = [['C1 · Both owners', 400, 164, 188, 42, 6], ['C1 · Business owners', 400, 139, 201, 51, 9], ['C1 · Property owners', 200, 71, 92, 33, 4]]
-    .map(([name, total, finished, in_progress, pending, failed]) => ({name, status: 'live', total, finished, in_progress, pending, failed}));
-  d.heyreach.accounts = {total: 1, active: 1};
-  d.ghl.status = 'live';
-  const sc = [0, 0, 19, 9, 6, 4, 3, 2, 2, 1, 1, 0, 0], sv = [0, 0, 0, 14.2e6, 9.8e6, 7.1e6, 5.4e6, 3.9e6, 4.2e6, 2.6e6, 2.1e6, 0, 0], dc = [7, 4, 3, 2, 1, 1, 0, 0, 0];
-  d.ghl.seller = d.ghl.seller.map((x, i) => ({...x, count: sc[i] || 0, value: sv[i] || 0}));
-  d.ghl.deal = d.ghl.deal.map((x, i) => ({...x, count: dc[i] || 0, value: dc[i] ? dc[i] * 1.4e6 : 0}));
-  d.ghl.activity = [[3, 'A seller moved to Discovery Call Booked'], [9, 'A seller moved to Valuation in Progress'], [20, 'A buyer moved to Qualified'], [27, 'A seller moved to Listing Agreement Sent'],
-    [49, 'A seller moved to Signed — Listing Live'], [70, 'A seller moved to Discovery Call Held'], [96, 'A buyer moved to Tour / Site Visit'], [120, 'A seller moved to Conversation Started']].map(([h, t]) => ({at: agoH(h), text: t}));
-  d.ghl.tasks = {open: 23, due_today: 6, overdue: 3, completed_30d: 58};
-  d.list.with_email = 842; d.list.with_linkedin = 611;
-  d.content = {...d.content, status: 'live', followers: 2431, followers_delta_30d: 187, posts_30d: 12, impressions_30d: 41800,
-    daily: dd.map((dt, i) => ({date: dt, followers: 2244 + Math.round(i * 6.2 + r() * 4), impressions: Math.round(600 + r() * 1400 + (i % 3 === 0 ? 1800 : 0))})),
-    posts: [[27, 'Why owners sell the building and the business separately', 6120, 142, 31], [24, 'The two numbers every Texas business owner should know', 4870, 98, 22],
-            [20, 'What a buyer actually checks in the first 10 minutes', 3950, 77, 18], [16, 'Selling at 62: the timeline nobody explains', 3310, 64, 11], [12, 'Lease vs own: how it moves your sale price', 2880, 51, 9]]
-      .map(([k, title, impressions, reactions, comments]) => ({date: dd[k], title, impressions, reactions, comments}))};
-  d.website = {...d.website, status: 'live', visits_30d: 1284, form_fills_30d: 17, daily: dd.map((dt, i) => ({date: dt, visits: Math.round(25 + r() * 30 + i * .6), forms: r() > .55 ? Math.round(r() * 2) : 0})),
-    sources: {LinkedIn: 412, Email: 356, Direct: 281, Organic: 164, Referral: 71}};
-  d.generated_at = now;
-  return d;
-}
 
 /* pointer: glass spotlight, KPI tilt, tooltips */
 document.addEventListener('pointermove', e => {
@@ -800,7 +761,7 @@ async function open_(E, key) {
   const ct = Uint8Array.from(atob(E.ct), c => c.charCodeAt(0));
   return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name: 'AES-GCM', iv: b16(E.iv)}, key, ct)));
 }
-function start(d) { $('#gate').remove(); D = DEMO ? demo(d) : d; chrome(); route() }
+function start(d) { $('#gate').remove(); D = d; chrome(); route() }
 fetch('data.enc?t=' + Date.now()).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json() }).then(async E => {
   let saved = null; try { saved = localStorage.getItem('ncr_key') } catch (e) {}
   if (saved) try { return start(await open_(E, await crypto.subtle.importKey('raw', b16(saved), 'AES-GCM', false, ['decrypt']))) } catch (e) {}
