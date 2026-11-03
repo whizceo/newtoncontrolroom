@@ -42,6 +42,9 @@ a{color:inherit}
 .nav a{display:flex;align-items:center;gap:11px;padding:9px 10px;margin:1px 0;border-radius:10px;color:var(--mute);text-decoration:none;font-size:13px;position:relative;transition:color .2s,background .2s}
 .nav a svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .nav a:hover{color:var(--ink);background:rgba(255,255,255,.035)}
+.nav a::after{content:'';position:absolute;inset:0;border-radius:10px;pointer-events:none;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.12) 45%,rgba(228,43,12,.22) 52%,transparent 62%) no-repeat;background-size:250% 100%;background-position:150% 0;opacity:0}
+.nav a:hover::after{animation:navsweep .75s ease-out}
+@keyframes navsweep{from{background-position:150% 0;opacity:1}to{background-position:-50% 0;opacity:1}}
 .nav a.on{color:#fff;background:linear-gradient(90deg,rgba(228,43,12,.24),rgba(228,43,12,.03));box-shadow:inset 0 0 0 1px rgba(228,43,12,.28)}
 .nav a.on::before{content:'';position:absolute;left:-14px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--sig);box-shadow:0 0 14px var(--sig)}
 .nav a .d{margin-left:auto}
@@ -265,7 +268,7 @@ svg text.big{font-family:var(--sans);font-weight:300;fill:#fff}
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="crm.js?v=20261103d"></script>
+<script src="crm.js?v=20261103e"></script>
 </head>
 <body>
 <div class="gate" id="gate"><form id="gf" autocomplete="on" onsubmit="return false">
@@ -280,10 +283,6 @@ svg text.big{font-family:var(--sans);font-weight:300;fill:#fff}
   <aside class="side">
     <div class="brand"><div class="mark">N</div><div><div class="bn">Newton</div><div class="bs">Control room</div></div></div>
     <nav class="nav" id="nav"></nav>
-    <div class="sidefoot">
-      <div class="mach"><div class="kl">Machine</div><b id="machs">—</b><span id="machd"></span></div>
-      <a class="demolink" id="demolink"></a>
-    </div>
   </aside>
   <main class="main" id="main">
     <header class="top">
@@ -704,21 +703,19 @@ const ICON = {
   integrations: '<path d="M9 7V3M15 7V3M7 7h10v4a5 5 0 0 1-10 0zM12 16v5"/>',
 };
 const PAGES = [
-  {id: 'overview', label: 'Overview', grp: 'Command', fn: pOverview},
-  {id: 'email', label: 'Email', grp: 'Outreach', src: 'instantly', fn: pEmail},
+  {id: 'overview', label: 'Overview', fn: pOverview},
+  {id: 'email', label: 'Email', src: 'instantly', fn: pEmail},
   // {id: 'content', label: 'LinkedIn content', src: 'content', fn: pContent},  // hidden until LinkedIn content is connected
-  {id: 'crm', label: 'Today', grp: 'CRM', fn: () => CRM.page('today')},
   {id: 'pipeline', label: 'Pipeline', fn: () => CRM.page('pipeline')},
   {id: 'contacts', label: 'Contacts', fn: () => CRM.page('contacts')},
-  {id: 'tasks', label: 'Tasks', fn: () => CRM.page('tasks')},
-  {id: 'activity', label: 'Activity', fn: () => CRM.page('activity')},
-  {id: 'territory', label: 'Territory', grp: 'Market', src: 'list', fn: pTerritory},
+  {id: 'territory', label: 'Territory', src: 'list', fn: pTerritory},
   // {id: 'website', label: 'Website', src: 'website', fn: pWebsite},  // hidden until the site is live
-  {id: 'integrations', label: 'Integrations', grp: 'System', fn: pIntegrations},
+  {id: 'integrations', label: 'Integrations', fn: pIntegrations},
 ];
 
 function route() {
-  const id = location.hash.slice(1) || 'overview', p = PAGES.find(x => x.id === id) || PAGES[0];
+  const h = location.hash.slice(1), id = {crm: 'pipeline', tasks: 'pipeline', activity: 'pipeline'}[h] || h || 'overview',  // old links (alert emails point to #crm)
+    p = PAGES.find(x => x.id === id) || PAGES[0];
   document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('on', a.dataset.id === p.id));
   $('#ptitle').textContent = p.label;
   let r; try { r = p.fn() } catch (e) { console.error(e); $('#view').innerHTML = `<div class="err">This view failed to render · ${esc(e.message)}</div>`; return }
@@ -731,10 +728,7 @@ function route() {
 
 function chrome() {
   $('#nav').innerHTML = PAGES.map(p => `${p.grp ? `<div class="grp">${p.grp}</div>` : ''}<a href="#${p.id}" data-id="${p.id}"><svg viewBox="0 0 24 24">${ICON[p.id]}</svg>${p.label}${p.src ? `<span class="d ${srcState(p.src).c}"></span>` : ''}</a>`).join('');
-  $('#machs').textContent = D.machine_live_since ? 'Live since ' + dshort(D.machine_live_since) : 'Built · launch pending';
-  $('#machd').textContent = `${API.filter(k => D[k].connected).length} of ${API.length} sources connected`;
   $('#syncp').innerHTML = `<span class="d ${API.some(k => D[k].connected) ? 'live' : ''}"></span>Data ${ago(D.generated_at)}`;
-  const dl = $('#demolink'); dl.textContent = DEMO ? '← Back to live data' : 'Preview with demo data →'; dl.href = (DEMO ? location.pathname : '?demo') + location.hash;
   $('#demopill').hidden = !DEMO;
   const tick = () => $('#clock').textContent = 'Texas ' + new Date().toLocaleTimeString('en-US', {timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit'}) + ' CT';
   tick(); setInterval(tick, 3e4);
