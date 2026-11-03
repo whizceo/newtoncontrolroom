@@ -24,27 +24,40 @@ const CRM = (() => {
   const ACT = {email_in: 'Reply', email_out: 'Sent', note: 'Note', call: 'Call', booking: 'Booking', stage_change: 'Stage', alert: 'Alert', no_show: 'No-show', bounce: 'Bounce'};
 
   const css = `
-#crm .wait{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;border:1px solid var(--sig);border-radius:14px;background:rgba(228,43,12,.1)}
+#crm .wait{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:13px 18px;border:1px solid rgba(228,43,12,.45);border-radius:16px;
+  background:linear-gradient(155deg,rgba(228,43,12,.26),rgba(228,43,12,.05) 60%,rgba(255,255,255,.01));box-shadow:0 0 46px -14px rgba(228,43,12,.6),inset 0 1px 0 rgba(255,190,160,.25)}
+#crm .wait b::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--sig);box-shadow:0 0 10px var(--sig);margin-right:10px;vertical-align:1px;animation:crmblink 1.6s ease-in-out infinite}
+@keyframes crmblink{50%{opacity:.25}}
 #crm .wait b{font-weight:500;margin-right:6px}
 #crm .wait button{font:12px var(--sans);color:var(--ink);background:rgba(0,0,0,.35);border:1px solid var(--line2);border-radius:999px;padding:5px 12px;cursor:pointer}
 #crm .wait button.late{border-color:var(--sig)}
 #crm .wait button:hover{border-color:var(--ink)}
 #crm .tb{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+#crm .tb.glass{padding:10px 12px;border-radius:16px}
 #crm .tb input[type=search]{flex:1;min-width:220px}
 #crm .btn{font:12px var(--sans);color:var(--ink2);background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:999px;padding:6px 14px;cursor:pointer;text-decoration:none;display:inline-block;white-space:nowrap}
 #crm .btn:hover{border-color:var(--ink2);color:var(--ink)}
-#crm .btn.pri{background:var(--sig);border-color:var(--sig);color:#fff}
+#crm .btn.pri{background:linear-gradient(160deg,#ff6a3d,var(--sig));border-color:var(--sig);color:#fff;box-shadow:0 0 18px -4px rgba(228,43,12,.75),inset 0 1px 0 rgba(255,255,255,.3)}
 #crm .btn.sm{padding:3px 10px;font-size:11px}
 #crm .btn:disabled{opacity:.35;cursor:default}
 #crm .seg{display:inline-flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden}
 #crm .seg button{font:12px var(--sans);color:var(--ink2);background:none;border:0;padding:6px 14px;cursor:pointer}
-#crm .seg button.on{background:var(--sig);color:#fff}
-#crm input,#crm select,#crm textarea{font:12.5px var(--sans);color:var(--ink);background:rgba(0,0,0,.35);border:1px solid var(--line2);border-radius:10px;padding:7px 10px}
-#crm input:focus,#crm select:focus,#crm textarea:focus{outline:none;border-color:var(--sig)}
+#crm .seg button.on{background:linear-gradient(160deg,#ff6a3d,var(--sig));color:#fff;box-shadow:0 0 18px -2px rgba(228,43,12,.7),inset 0 1px 0 rgba(255,255,255,.3)}
+#crm input,#crm select,#crm textarea{font:12.5px var(--sans);color:var(--ink);background:rgba(0,0,0,.35);border:1px solid var(--line2);border-radius:10px;padding:7px 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+#crm input:focus,#crm select:focus,#crm textarea:focus{outline:none;border-color:var(--sig);box-shadow:0 0 0 3px rgba(228,43,12,.15),0 0 18px -4px rgba(228,43,12,.6)}
 #crm textarea{width:100%;min-height:70px;resize:vertical}
 #crm .hint{color:var(--mute);font-size:12px}
-#crm .row{display:grid;grid-template-columns:1.4fr 1.2fr .8fr .5fr 1fr .7fr;gap:10px;padding:10px 8px;border-bottom:1px solid var(--line);cursor:pointer;align-items:center;font-size:13px}
-#crm .row:hover{background:rgba(255,255,255,.035)}
+#crm .row{display:grid;grid-template-columns:1.4fr 1.2fr .8fr .5fr 1fr .7fr;gap:10px;padding:10px 8px;border-bottom:1px solid var(--line);cursor:pointer;align-items:center;font-size:13px;border-radius:10px;transition:background .2s,box-shadow .2s,transform .2s}
+#crm .row:hover{background:linear-gradient(90deg,rgba(228,43,12,.12),rgba(255,255,255,.02) 55%);box-shadow:inset 2px 0 0 var(--sig),0 10px 26px -18px rgba(228,43,12,.8);transform:translateX(2px)}
+#crm .who{display:flex;gap:11px;align-items:center;min-width:0}#crm .who>div{min-width:0}
+#crm .orb{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:500 10px var(--mono);letter-spacing:.02em;color:#fff;
+  background:radial-gradient(circle at 32% 28%,#ffb08a,#e42b0c 52%,#4a0f05);box-shadow:0 0 16px -3px rgba(228,43,12,.75),inset 0 1px 1px rgba(255,255,255,.45)}
+#crm .orb.Property{background:radial-gradient(circle at 32% 28%,#ffe0b8,#ff8a3d 52%,#4d2306);box-shadow:0 0 16px -3px rgba(255,138,61,.7),inset 0 1px 1px rgba(255,255,255,.45)}
+#crm .orb.Business{background:radial-gradient(circle at 32% 28%,#d9d2cc,#6d6560 55%,#1d1a18);box-shadow:0 0 14px -4px rgba(255,255,255,.3),inset 0 1px 1px rgba(255,255,255,.45)}
+#crm .fit{display:flex;align-items:center;gap:8px;font-feature-settings:'tnum'}
+#crm .fit svg{width:26px;height:26px;transform:rotate(-90deg);overflow:visible}
+#crm .fit .tr{stroke:rgba(255,255,255,.08)}#crm .fit .arc{stroke:var(--sig);filter:drop-shadow(0 0 3px rgba(228,43,12,.9))}
+#crm .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11.5px;border:1px solid rgba(228,43,12,.45);background:rgba(228,43,12,.1);box-shadow:0 0 14px -6px rgba(228,43,12,.8)}
 #crm .row.h{color:var(--mute);font:9.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;cursor:default}
 #crm .row.h:hover{background:none}
 #crm .row small{display:block;color:var(--mute);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -55,29 +68,45 @@ const CRM = (() => {
 #crm .tag.hot{border-color:var(--sig);color:var(--amber)}
 #crm .tag.cold{color:var(--dim)}
 #crm .chk{width:16px;height:16px;accent-color:var(--sig);cursor:pointer}
-#crm .kb{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px}
-#crm .kcol{flex:0 0 220px;background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:14px;padding:10px;min-height:340px;transition:border-color .15s}
-#crm .kcol.over{border-color:var(--sig);background:rgba(228,43,12,.06)}
-#crm .kcol h4{font:10px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--mute);margin-bottom:2px;display:flex;justify-content:space-between;gap:6px}
-#crm .kcol h4 b{color:var(--ink);font-weight:500}
-#crm .kcol .cv{font:10px var(--mono);color:var(--dim);margin-bottom:9px;height:13px}
-#crm .card{background:rgba(0,0,0,.4);border:1px solid var(--line2);border-radius:10px;padding:9px 10px;margin-bottom:7px;cursor:grab;font-size:12.5px}
-#crm .card:hover{border-color:var(--ink2)}
+#crm .kb{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 12px}
+#crm .kcol{flex:0 0 232px;padding:12px;min-height:360px;display:flex;flex-direction:column}
+#crm .kcol.has{border-color:rgba(228,43,12,.32);box-shadow:inset 0 1px 0 rgba(255,190,160,.12),0 0 40px -18px rgba(228,43,12,.55),0 28px 60px -32px rgba(0,0,0,.95)}
+#crm .kcol.over{border-color:var(--sig);box-shadow:0 0 0 1px var(--sig),0 0 40px -10px rgba(228,43,12,.7)}
+#crm .kcol h4{font:10px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--mute);margin-bottom:2px;display:flex;justify-content:space-between;gap:6px;align-items:baseline}
+#crm .kcol h4 em{font-style:normal;color:var(--sig);margin-right:7px}
+#crm .kcol h4 b{color:var(--ink);font-weight:400;font-size:15px;font-family:var(--sans)}
+#crm .kcol.has h4 b{text-shadow:0 0 12px rgba(228,43,12,.9)}
+#crm .kbar{height:2px;border-radius:2px;background:rgba(255,255,255,.06);margin:8px 0 7px;overflow:hidden}
+#crm .kbar i{display:block;height:100%;background:linear-gradient(90deg,var(--sig),#ffb08a);box-shadow:0 0 10px var(--sig)}
+#crm .kcol .cv{font:10px var(--mono);color:#ffb79f;margin-bottom:10px;height:13px}
+#crm .kempty{flex:1;display:grid;place-items:center;align-content:center;gap:10px;color:var(--dim);font:9.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;min-height:200px}
+#crm .kempty i{width:44px;height:16px;border-radius:50%;border:1px solid rgba(255,150,110,.22);box-shadow:0 0 18px -6px rgba(228,43,12,.5),inset 0 0 10px rgba(228,43,12,.12)}
+#crm .card{--tc:var(--sig);position:relative;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:10px 11px 9px 13px;margin-bottom:8px;cursor:grab;font-size:12.5px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 14px 28px -18px rgba(0,0,0,.9);transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,border-color .25s}
+#crm .card::before{content:'';position:absolute;left:0;top:12px;bottom:12px;width:2px;border-radius:2px;background:var(--tc);box-shadow:0 0 10px var(--tc)}
+#crm .card.Property{--tc:#ff8a3d}#crm .card.Business{--tc:#b9b1ab}
+#crm .card:hover{transform:translateY(-3px);border-color:rgba(255,150,110,.38);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 0 0 1px rgba(228,43,12,.12),0 20px 36px -16px rgba(228,43,12,.5)}
 #crm .card.lost{opacity:.45}
-#crm .card b{display:block;font-weight:500}
-#crm .card small{color:var(--mute);display:block}
-#crm .card .meta{display:flex;justify-content:space-between;margin-top:6px;font:10px var(--mono);color:var(--mute)}
+#crm .card .who{gap:9px}#crm .card .orb{width:26px;height:26px;font-size:9px}
+#crm .card b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#crm .card small{color:var(--mute);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#crm .card .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font:10px var(--mono);color:var(--mute)}
+#crm .card .val{color:#ffd2c0;font-size:11px;text-shadow:0 0 10px rgba(228,43,12,.9)}
+#crm .track{height:250px}#crm .track svg{width:100%;height:100%;display:block;overflow:visible}
+#crm .track .flow{animation:crmflow 2.2s linear infinite}@keyframes crmflow{to{stroke-dashoffset:-32}}
+#crm .track text.sn{font:9px var(--mono);letter-spacing:.06em;fill:var(--mute);text-transform:uppercase}
+#crm .track text.sn.on{fill:#ffb79f}
 #crm .grp{font:9.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:16px 0 6px;display:flex;justify-content:space-between}
 #crm .grp:first-child{margin-top:0}
 #crm .chips{display:flex;gap:6px;flex-wrap:wrap}
 #crm .chips button{font:11px var(--mono);color:var(--ink2);background:none;border:1px solid var(--line2);border-radius:999px;padding:4px 11px;cursor:pointer}
 #crm .chips button.on{border-color:var(--sig);color:var(--ink);background:rgba(228,43,12,.12)}
 #crm .shade{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:49;backdrop-filter:blur(2px)}
-#crm .drawer{position:fixed;top:0;right:0;bottom:0;width:min(600px,100vw);background:#0d0c0c;border-left:1px solid var(--line2);z-index:50;overflow-y:auto;padding:22px 24px 40px;box-shadow:-30px 0 60px rgba(0,0,0,.5);animation:crmin .18s ease-out}
+#crm .drawer{position:fixed;top:0;right:0;bottom:0;width:min(600px,100vw);background:radial-gradient(600px 300px at 100% 0,rgba(228,43,12,.12),transparent 60%),#0d0c0c;border-left:1px solid var(--line2);z-index:50;overflow-y:auto;padding:22px 24px 40px;box-shadow:-30px 0 60px rgba(0,0,0,.5);animation:crmin .18s ease-out}
 @keyframes crmin{from{transform:translateX(30px);opacity:0}}
 #crm .drawer h2{font-weight:500;font-size:21px;margin-bottom:2px}
 #crm .drawer h5{font:9.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:20px 0 8px}
-#crm .box{border:1px solid var(--line2);border-radius:12px;padding:12px;background:rgba(255,255,255,.02)}
+#crm .box{border:1px solid var(--line2);border-radius:12px;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
 #crm .fg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 #crm .fg label{font:9.5px var(--mono);color:var(--mute);text-transform:uppercase;letter-spacing:.06em;display:flex;flex-direction:column;gap:4px}
 #crm .fg label.w{grid-column:span 2}
@@ -198,11 +227,14 @@ const CRM = (() => {
     v.innerHTML = `<div class="g">
       <div class="s12 kpis k4">${kpi(pipe === 'seller' ? 'Owners in pipeline' : 'Buyers in pipeline', open.length, `${deals.length - open.length} marked lost`)}${kpi('Property value', val ? money(val) : '—', valued ? `county-appraised · ${valued} of ${open.length} owners` : 'no appraised value yet')}${kpi(pipe === 'seller' ? 'Call booked or further' : 'Qualified or further', booked, pctf(booked, open.length, 0) + ' of the pipeline')}${kpi(pipe === 'seller' ? 'Signed / live' : 'Clear to close / closed', won, stale ? `${stale} untouched for ${STALE_D}+ days` : 'nothing stale', {accent: stale})}</div>
       ${waiting.length ? `<div class="s12 wait"><b>${waiting.length} ${waiting.length === 1 ? 'owner is' : 'owners are'} waiting on your reply</b>${waiting.map(x => `<button data-c="${x.id}" class="${x.hours_waiting > LATE_H ? 'late' : ''}">${esc(name(x))} · ${wait(x.hours_waiting)}</button>`).join('')}</div>` : ''}
-      <div class="s12"><div class="tb"><div class="seg"><button data-p="seller" class="${pipe === 'seller' ? 'on' : ''}">Sellers</button><button data-p="buyer" class="${pipe === 'buyer' ? 'on' : ''}">Buyers</button></div>
+      ${panel({span: 12, title: 'Where every owner stands', sub: 'One pillar per stage · height = owners at that stage · glow = property value', body: `<div class="track">${track(stages[pipe], by)}</div>`})}
+      <div class="s12"><div class="tb glass"><div class="seg"><button data-p="seller" class="${pipe === 'seller' ? 'on' : ''}">Sellers</button><button data-p="buyer" class="${pipe === 'buyer' ? 'on' : ''}">Buyers</button></div>
         <input type="search" id="crm-kq" placeholder="Filter cards by name or business" value="${esc(kbq)}"><span class="hint">Drag a card to move it · tap to open</span></div>
-      <div class="kb">${stages[pipe].map(s => { const list = by[s.name] || [], sv = sum(list.map(d => ({v: +d.value_estimate || 0})), 'v');
-        return `<div class="kcol" data-stage="${esc(s.name)}"><h4><span>${esc(s.name)}</span><b>${list.length}</b></h4><div class="cv">${sv ? money(sv) : ''}</div>
-        ${list.sort((a, b) => !!a.lost_reason - !!b.lost_reason || new Date(b.updated_at) - new Date(a.updated_at)).map(card).join('')}</div>` }).join('')}</div></div></div>`;
+      <div class="kb">${stages[pipe].map((s, i) => { const list = by[s.name] || [], sv = sum(list.map(d => ({v: +d.value_estimate || 0})), 'v'), n = list.filter(d => !d.lost_reason).length;
+        return `<div class="glass kcol ${n ? 'has' : ''}" data-stage="${esc(s.name)}"><h4><span><em>${String(i + 1).padStart(2, '0')}</em>${esc(s.name)}</span><b>${list.length}</b></h4>
+        <div class="kbar"><i style="width:${open.length ? 100 * n / open.length : 0}%"></i></div><div class="cv">${sv ? money(sv) : ''}</div>
+        ${list.length ? '' : '<div class="kempty"><i></i>No one here yet</div>'}${list.sort((a, b) => !!a.lost_reason - !!b.lost_reason || new Date(b.updated_at) - new Date(a.updated_at)).map(card).join('')}</div>` }).join('')}</div></div></div>`;
+    v.querySelectorAll('.glass').forEach((e, i) => e.style.animationDelay = i * 30 + 'ms');
     v.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { pipe = b.dataset.p; pipeline() });
     v.querySelectorAll('.wait [data-c]').forEach(b => b.onclick = () => open(b.dataset.c));
     const filter = () => v.querySelectorAll('.card').forEach(c => c.style.display = !kbq || c.dataset.s.includes(kbq.toLowerCase()) ? '' : 'none');
@@ -219,22 +251,52 @@ const CRM = (() => {
         e.preventDefault(); col.classList.remove('over');
         const id = e.dataTransfer.getData('text/plain'), card = v.querySelector(`.card[data-deal="${id}"]`);
         if (!card || card.closest('.kcol') === col) return;
-        col.appendChild(card);  // move now, confirm after save
+        col.querySelector('.kempty')?.remove(); col.appendChild(card);  // move now, confirm after save
         if (!fail((await sb.from('deals').update({stage: col.dataset.stage}).eq('id', id)).error)) flash('Moved to ' + col.dataset.stage);
         pipeline();
       };
     });
   }
   const card = d => { const c = d.contacts || {}, idle = hrs(d.updated_at);
-    return `<div class="card ${d.lost_reason ? 'lost' : ''}" draggable="true" data-deal="${d.id}" data-c="${c.id}" data-s="${esc((name(c) + ' ' + (c.company || '')).toLowerCase())}">
-      <b>${esc(name(c))}</b><small>${esc(c.company || '')}</small>
-      <div style="margin-top:5px">${c.owner_type ? `<span class="tag">${esc(c.owner_type)}</span>` : ''}${d.lost_reason ? '<span class="tag cold">lost</span>' : ''}</div>
-      <div class="meta"><span>${d.next_action_at ? '→ ' + when(d.next_action_at) : `<span class="${!d.lost_reason && idle > STALE_D * 24 ? 'late' : ''}">${wait(idle)} here</span>`}</span><span>${d.value_estimate ? money(+d.value_estimate) : ''}</span></div></div>` };
+    return `<div class="card ${esc(c.owner_type || '')} ${d.lost_reason ? 'lost' : ''}" draggable="true" data-deal="${d.id}" data-c="${c.id}" data-s="${esc((name(c) + ' ' + (c.company || '')).toLowerCase())}">
+      <div class="who">${orb(c)}<div><b>${esc(name(c))}</b><small>${esc(c.company || '')}</small></div></div>
+      <div style="margin-top:7px">${c.owner_type ? `<span class="tag">${esc(c.owner_type)}</span>` : ''}${d.lost_reason ? '<span class="tag cold">lost</span>' : ''}</div>
+      <div class="meta"><span>${d.next_action_at ? '→ ' + when(d.next_action_at) : `<span class="${!d.lost_reason && idle > STALE_D * 24 ? 'late' : ''}">${wait(idle)} here</span>`}</span><span class="val">${d.value_estimate ? money(+d.value_estimate) : ''}</span></div></div>` };
+  const orb = c => `<span class="orb ${esc(c.owner_type || '')}">${esc(name(c).split(/\s+/).filter(w => /^[A-Za-z]/.test(w)).map(w => w[0]).filter((x, i, a) => i === 0 || i === a.length - 1).join('').toUpperCase() || '·')}</span>`;
+  const fit = f => f == null ? '<span class="hint">—</span>' : `<span class="fit"><svg viewBox="0 0 26 26"><circle class="tr" cx="13" cy="13" r="10" fill="none" stroke-width="2.5"/><circle class="arc" cx="13" cy="13" r="10" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="${(62.83 * Math.min(100, f) / 100).toFixed(1)} 62.83"/></svg>${f}</span>`;
+
+  /* stage track: one glowing pillar per stage, open deals only, height = owners, glow = appraised value */
+  function track(list, by) {
+    const n = list.length, x0 = 70, x1 = 930, base = 168, id = 'pt' + Math.random().toString(36).slice(2, 7);
+    const X = i => n > 1 ? x0 + i * (x1 - x0) / (n - 1) : 500;
+    const st = list.map(s => { const o = (by[s.name] || []).filter(d => !d.lost_reason); return {s, c: o.length, v: sum(o.map(d => ({v: +d.value_estimate || 0})), 'v')} });
+    const maxC = Math.max(1, ...st.map(x => x.c)), maxV = Math.max(1, ...st.map(x => x.v));
+    const words = t => t.split(' ').reduce((l, w) => { const i = l.length - 1; i >= 0 && (l[i] + ' ' + w).length <= 10 ? l[i] += ' ' + w : l.push(w); return l }, []);  // wrap at ~10 chars so neighbours never touch
+    return `<svg viewBox="0 0 1000 250" preserveAspectRatio="xMidYMid meet"><defs>${glowF(id + 'g', 5)}${grad(id + 'p', '#ff6a3d', 1, .05)}
+      <radialGradient id="${id}r"><stop offset="0" stop-color="#ff7a4d" stop-opacity=".95"/><stop offset=".6" stop-color="#e42b0c" stop-opacity=".35"/><stop offset="1" stop-color="#e42b0c" stop-opacity="0"/></radialGradient>
+      <linearGradient id="${id}f" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e42b0c" stop-opacity=".16"/><stop offset="1" stop-color="#e42b0c" stop-opacity="0"/></linearGradient></defs>
+      <path d="M${x0 - 34} ${base - 16}L${x1 + 34} ${base - 16}L${x1 + 64} ${base + 22}L${x0 - 64} ${base + 22}Z" fill="url(#${id}f)" stroke="rgba(255,150,110,.16)"/>
+      ${Array.from({length: 9}, (_, k) => `<line x1="${x0 - 34 + k * (x1 - x0 + 68) / 8}" y1="${base - 16}" x2="${x0 - 64 + k * (x1 - x0 + 128) / 8}" y2="${base + 22}" stroke="rgba(255,255,255,.04)"/>`).join('')}
+      <line x1="${X(0)}" y1="${base}" x2="${X(n - 1)}" y2="${base}" stroke="rgba(255,120,80,.45)" stroke-width="1.2" stroke-dasharray="3 5" class="flow"/>
+      ${st.map((x, i) => { const cx = X(i), h = x.c ? 22 + 92 * x.c / maxC : 0, hot = x.v / maxV;
+        return `<g data-tip="${esc(x.s.name)}<br>${x.c} ${x.c === 1 ? 'owner' : 'owners'}${x.v ? ' · ' + money(x.v) : ''}">
+          <ellipse cx="${cx}" cy="${base}" rx="34" ry="11" fill="${x.c ? `url(#${id}r)` : 'rgba(255,255,255,.035)'}" stroke="${x.c ? 'rgba(255,150,110,.75)' : 'rgba(255,255,255,.1)'}"/>
+          ${x.c ? `<ellipse cx="${cx}" cy="${base}" rx="20" ry="6.5" fill="none" stroke="#ff8a5c" class="pulse"/>
+          <rect x="${cx - 5}" y="${base - h}" width="10" height="${h}" rx="5" fill="url(#${id}p)" filter="url(#${id}g)" class="grow" opacity="${.65 + .35 * hot}"/>
+          <rect x="${cx - 1.2}" y="${base - h}" width="2.4" height="${h}" fill="#ffd7c4" class="grow"/>
+          <circle cx="${cx}" cy="${base - h}" r="3.6" fill="#fff" filter="url(#${id}g)" class="rise3"/>
+          <text x="${cx}" y="${base - h - 30}" text-anchor="middle" class="fv rise3">${x.c}</text>
+          <text x="${cx}" y="${base - h - 14}" text-anchor="middle" class="fc rise3">${x.v ? money(x.v) : ''}</text>`
+          : `<text x="${cx}" y="${base - 18}" text-anchor="middle" style="fill:var(--dim)">0</text>`}
+          ${words(x.s.name).map((w, k) => `<text x="${cx}" y="${base + 38 + k * 11}" text-anchor="middle" class="sn ${x.c ? 'on' : ''}">${esc(w)}</text>`).join('')}
+          <rect x="${cx - 44}" y="20" width="88" height="${base + 50}" fill="transparent"/></g>` }).join('')}</svg>`;
+  }
 
   /* ---------- Contacts ---------- */
   async function contacts() {
     const v = V(), sel = (id, opts, cur, all) => `<select id="${id}"><option value="">${all}</option>${opts.map(([val, lab]) => `<option value="${esc(val)}" ${cur === val ? 'selected' : ''}>${esc(lab)}</option>`).join('')}</select>`;
-    v.innerHTML = `<div class="tb"><input type="search" id="crm-q" placeholder="Search name, business, email, city" value="${esc(q.text)}">
+    v.innerHTML = `<div class="kpis k4" id="crm-ck" style="margin-bottom:14px">${kpi('Owners in the CRM', '…', '')}${kpi('Replied', '…', '')}${kpi('Positive', '…', '')}${kpi('In the pipeline', '…', '')}</div>
+      <div class="tb glass"><input type="search" id="crm-q" placeholder="Search name, business, email, city" value="${esc(q.text)}">
         ${sel('crm-show', [['waiting', 'Waiting on you'], ['replied', 'Replied'], ['pipeline', 'In pipeline'], ['cold', 'Not interested']], q.show, 'Everyone')}
         ${sel('crm-t', ['Both', 'Business', 'Property'].map(x => [x, x]), q.type, 'All types')}
         ${sel('crm-ci', ['C1', 'C2', 'C3', 'C4'].map(x => [x, x]), q.circle, 'All circles')}
@@ -247,7 +309,16 @@ const CRM = (() => {
     [['#crm-t', 'type'], ['#crm-ci', 'circle'], ['#crm-s', 'stage'], ['#crm-show', 'show'], ['#crm-o', 'sort']].forEach(([s, k]) => v.querySelector(s).onchange = e => { q[k] = e.target.value || (k === 'sort' ? 'reply' : ''); q.page = 0; list() });
     v.querySelector('#crm-csv').onclick = exportCsv;
     v.querySelector('#crm-new').onclick = newContact;
-    list();
+    v.querySelectorAll('.glass').forEach((e, i) => e.style.animationDelay = i * 35 + 'ms');
+    list(); stats();
+  }
+  async function stats() {  // real counts straight from the CRM, no estimates
+    const n = r => r.then(x => x.count ?? 0), all = sb.from('contacts').select('id', {count: 'exact', head: true});
+    const [tot, rep, pos, pip] = await Promise.all([n(all), n(sb.from('contacts').select('id', {count: 'exact', head: true}).not('last_inbound_at', 'is', null)),
+      n(sb.from('contacts').select('id', {count: 'exact', head: true}).contains('tags', ['positive'])), n(sb.from('deals').select('id', {count: 'exact', head: true}).is('lost_reason', null))]);
+    const box = document.getElementById('crm-ck'); if (!box) return;
+    box.innerHTML = kpi('Owners in the CRM', fmt(tot), 'owners on file') + kpi('Replied', fmt(rep), pctf(rep, tot) + ' wrote back') +
+      kpi('Positive', fmt(pos), pctf(pos, rep, 0) + ' of replies', {accent: pos}) + kpi('In the pipeline', fmt(pip), 'open deals, buyers + sellers');
   }
 
   async function query(cols, count) {
@@ -270,7 +341,7 @@ const CRM = (() => {
     if (error) { box.innerHTML = empty(error.message); return }
     const tags = c => (c.tags || []).filter(x => x !== 'positive').map(x => `<span class="tag ${x === 'not_interested' ? 'cold' : ''}">${esc(x.replace(/_/g, ' '))}</span>`).join('') + ((c.tags || []).includes('positive') ? '<span class="tag hot">positive</span>' : '');
     box.innerHTML = (data.length ? `<div class="row h"><div>Owner</div><div>Business</div><div>Type</div><div>Fit</div><div>Stage</div><div>Last reply</div></div>` +
-      data.map(c => `<div class="row" data-c="${c.id}"><div>${esc(name(c))}<small>${esc(c.email)}</small></div><div>${esc(c.company || '')}<small>${esc(c.city || '')}</small></div><div>${esc(c.owner_type || '')} ${c.circle ? `<span class="tag">${esc(c.circle)}</span>` : ''}</div><div>${c.fit_score ?? '—'}</div><div>${esc(c.deals?.find(d => d.pipeline === 'seller')?.stage || '—')}<small>${tags(c)}</small></div><div class="${c.last_inbound_at ? '' : 'hint'}">${c.last_inbound_at ? wait(hrs(c.last_inbound_at)) + ' ago' : '—'}</div></div>`).join('')
+      data.map(c => `<div class="row" data-c="${c.id}"><div class="who">${orb(c)}<div>${esc(name(c))}<small>${esc(c.email)}</small></div></div><div>${esc(c.company || '')}<small>${esc(c.city || '')}</small></div><div>${esc(c.owner_type || '')} ${c.circle ? `<span class="tag">${esc(c.circle)}</span>` : ''}</div><div>${fit(c.fit_score)}</div><div>${(st => st ? `<span class="pill">${esc(st)}</span>` : '—')(c.deals?.find(d => d.pipeline === 'seller')?.stage)}<small style="margin-top:4px">${tags(c)}</small></div><div class="${c.last_inbound_at ? '' : 'hint'}">${c.last_inbound_at ? wait(hrs(c.last_inbound_at)) + ' ago' : '—'}</div></div>`).join('')
       : empty('No owners match these filters')) +
       `<div class="tb" style="margin:14px 0 0;justify-content:space-between"><span class="hint">${fmt(count)} owners${count > PAGE ? ` · page ${q.page + 1} of ${Math.ceil(count / PAGE)}` : ''}</span><span><button class="btn" data-pg="-1" ${q.page ? '' : 'disabled'}>← Prev</button> <button class="btn" data-pg="1" ${(q.page + 1) * PAGE >= count ? 'disabled' : ''}>Next →</button></span></div>`;
     box.querySelectorAll('[data-pg]').forEach(b => b.onclick = () => { q.page += +b.dataset.pg; list(); document.getElementById('main')?.scrollTo(0, 0) });

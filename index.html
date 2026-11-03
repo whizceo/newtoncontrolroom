@@ -183,8 +183,15 @@ svg text.big{font-family:var(--sans);font-weight:300;fill:#fff}
 .cell em.ok{color:var(--ok)}.cell em.bad{color:var(--err)}
 .intg{padding:20px}
 .ih{display:flex;gap:13px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
-.logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font:500 14px var(--sans);color:#fff;flex:none;
-  background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.02));border:1px solid var(--line2);box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+.logo{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font:500 14px var(--sans);color:#fff;flex:none;
+  background:radial-gradient(circle at 30% 22%,rgba(255,176,138,.9),#e42b0c 48%,#3d0c04);border:1px solid rgba(255,150,110,.5);
+  box-shadow:0 0 22px -4px rgba(228,43,12,.75),inset 0 1px 1px rgba(255,255,255,.45),inset 0 -6px 12px rgba(0,0,0,.35)}
+.logo.man{background:radial-gradient(circle at 30% 22%,#ffe0b8,#ff8a3d 50%,#3d1d04);box-shadow:0 0 22px -4px rgba(255,138,61,.65),inset 0 1px 1px rgba(255,255,255,.45),inset 0 -6px 12px rgba(0,0,0,.35)}
+.logo.off,.logo.err{background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.02));border-color:var(--line2);box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+.hub{height:270px}.hub svg{width:100%;height:100%;display:block;overflow:visible}
+.hub .spin{transform-box:fill-box;transform-origin:center;animation:spin 18s linear infinite}.hub .spin.r{animation-direction:reverse;animation-duration:26s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hub text.nn{font-family:var(--sans);font-size:13px;fill:var(--ink)}.hub text.ns{font-size:9px;letter-spacing:.08em;text-transform:uppercase}
 .ih h3{font-weight:400;font-size:15px}.ih p{font:10.5px var(--mono);color:var(--mute)}
 .ih .chip{margin-left:auto}
 .ep{font:10.5px var(--mono);color:var(--ink2);display:grid;gap:4px;padding:12px;border-radius:10px;background:rgba(0,0,0,.3);border:1px solid var(--line);margin:10px 0 14px;overflow-x:auto}
@@ -268,7 +275,7 @@ svg text.big{font-family:var(--sans);font-weight:300;fill:#fff}
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="crm.js?v=20261103g"></script>
+<script src="crm.js?v=20261103h"></script>
 </head>
 <body>
 <div class="gate" id="gate"><form id="gf" autocomplete="on" onsubmit="return false">
@@ -675,10 +682,40 @@ const CATALOG = [
   {k: 'list', logo: 'TX', name: 'Owner list', kind: 'Texas registry + BigQuery owner tables', ep: ['registry.csv → county, metro, sector aggregates', 'BigQuery owner tables → in play'],
     un: [['County map + leaderboard', d => d.list.registry && d.list.registry.by_county], ['Metro, sector, age, fit mix', d => d.list.registry && d.list.registry.by_metro], ['In-play segments', d => d.list.in_play], ['Enrichment coverage', d => d.list.with_email != null]]},
 ];
+/* hub: the room in the middle, each source wired in; light travels only on live wires */
+function hub() {
+  const W = 1000, cx = 500, cy = 135, id = uid(), pos = [[180, 70], [180, 200], [820, 135]];
+  const col = {live: '#ff6a3d', man: C.amber, err: '#ff4d4d', off: C.dim};
+  const nodes = CATALOG.map((x, i) => { const s = srcState(x.k), [nx, ny] = pos[i % 3], left = nx < cx, ex = left ? nx + 95 : nx - 95, c = col[s.c] || C.dim;
+    const d = `M${ex} ${ny} C${(ex + cx) / 2} ${ny} ${(ex + cx) / 2} ${cy} ${left ? cx - 62 : cx + 62} ${cy}`;
+    return `<path d="${d}" fill="none" stroke="${c}" stroke-opacity="${s.c === 'off' ? .25 : .5}" stroke-width="1.6" ${s.c === 'off' ? 'stroke-dasharray="3 5"' : ''}/>
+      ${s.c === 'live' || s.c === 'man' ? [0, 1].map(k => `<circle r="${s.c === 'live' ? 3.4 : 2.6}" fill="#fff" filter="url(#${id}g)"><animateMotion dur="${s.c === 'live' ? 2.6 : 5}s" begin="${k * (s.c === 'live' ? 1.3 : 2.5)}s" repeatCount="indefinite" path="${d}"/></circle>`).join('') : ''}
+      <g data-tip="${x.name}<br>${s.t}"><rect x="${nx - 95}" y="${ny - 28}" width="190" height="56" rx="14" fill="rgba(255,255,255,.045)" stroke="${c}" stroke-opacity=".45"/>
+      <circle cx="${nx - 68}" cy="${ny}" r="15" fill="url(#${id}${s.c === 'man' ? 'm' : s.c === 'live' ? 'o' : 'x'})" filter="url(#${id}g)"/>
+      <text x="${nx - 68}" y="${ny + 4}" text-anchor="middle" style="fill:#fff;font-size:10px">${x.logo}</text>
+      <text x="${nx - 44}" y="${ny - 3}" class="nn">${x.name}</text><text x="${nx - 44}" y="${ny + 13}" class="ns" style="fill:${c}">${esc(s.t)}</text></g>` }).join('');
+  const live = CATALOG.filter(x => srcState(x.k).c === 'live').length;
+  return `<svg viewBox="0 0 ${W} 270" preserveAspectRatio="xMidYMid meet"><defs>${glowF(id + 'g', 4)}
+    <radialGradient id="${id}o" cx=".35" cy=".3"><stop offset="0" stop-color="#ffc4a8"/><stop offset=".5" stop-color="#e42b0c"/><stop offset="1" stop-color="#3d0c04"/></radialGradient>
+    <radialGradient id="${id}m" cx=".35" cy=".3"><stop offset="0" stop-color="#ffe0b8"/><stop offset=".5" stop-color="#ff8a3d"/><stop offset="1" stop-color="#3d1d04"/></radialGradient>
+    <radialGradient id="${id}x" cx=".35" cy=".3"><stop offset="0" stop-color="#777"/><stop offset="1" stop-color="#1a1817"/></radialGradient>
+    <radialGradient id="${id}h"><stop offset="0" stop-color="#e42b0c" stop-opacity=".35"/><stop offset="1" stop-color="#e42b0c" stop-opacity="0"/></radialGradient></defs>
+    <circle cx="${cx}" cy="${cy}" r="130" fill="url(#${id}h)"/>
+    ${nodes}
+    <circle cx="${cx}" cy="${cy}" r="78" fill="none" stroke="rgba(255,150,110,.25)" stroke-dasharray="2 7" class="spin"/>
+    <circle cx="${cx}" cy="${cy}" r="66" fill="none" stroke="rgba(255,150,110,.4)" stroke-dasharray="40 14 4 14" class="spin r"/>
+    <circle cx="${cx}" cy="${cy}" r="52" fill="url(#${id}o)" filter="url(#${id}g)"/>
+    <circle cx="${cx}" cy="${cy}" r="52" fill="none" stroke="rgba(255,220,200,.5)"/>
+    <text x="${cx}" y="${cy - 2}" text-anchor="middle" class="big" style="font-size:24px">N</text>
+    <text x="${cx}" y="${cy + 18}" text-anchor="middle" style="fill:#ffd7c4;font-size:8.5px;letter-spacing:.14em">CONTROL ROOM</text>
+    <text x="${cx}" y="${cy + 102}" text-anchor="middle" style="font-size:9.5px;letter-spacing:.1em">${live} OF ${CATALOG.length} SOURCES LIVE · DATA ${ago(D.generated_at).toUpperCase()}</text></svg>`;
+}
+
 function pIntegrations() {
   const html = `<div class="g">
+    ${panel({span: 12, title: 'Live connections', sub: 'Every source feeding this room · moving light = data flowing', body: `<div class="hub">${hub()}</div>`})}
     ${CATALOG.map(x => { const api = API.includes(x.k), con = api ? !!D[x.k].connected : true, b = D[x.k] || {};
-      return `<section class="glass intg s6"><div class="ih"><div class="logo">${x.logo}</div><div><h3>${x.name}</h3><p>${x.kind}</p></div>${srcChip(x.k)}</div>
+      return `<section class="glass intg s6"><div class="ih"><div class="logo ${srcState(x.k).c}">${x.logo}</div><div><h3>${x.name}</h3><p>${x.kind}</p></div>${srcChip(x.k)}</div>
         <div class="kl">${api ? `Last sync · ${lastSync(x.k)}` : `Updated · ${lastSync(x.k)}`}${b.error ? ` · <span style="color:var(--err)">${esc(b.error.slice(0, 90))}</span>` : ''}</div>
         <div class="ep">${x.ep.map(e => `<span>${esc(e)}</span>`).join('')}</div>
         <div class="kl" style="margin-bottom:9px">What it shows</div>
