@@ -74,7 +74,7 @@ const CRM = (() => {
   // Email + password (set by us at deploy). Supabase's built-in mailer only reaches project members, so no magic link.
   // The session is kept in this browser: Issac signs in once.
   function login(body) {
-    body.innerHTML = `<form class="glass panel login"><h3>Sign in to your CRM</h3><p class="note">Once per device. You stay signed in.</p>
+    body.innerHTML = `<form class="glass panel login" action="javascript:void 0"><h3>Sign in to your CRM</h3><p class="note">Once per device. You stay signed in.</p>
       <input type="email" id="crm-em" placeholder="Email" autocomplete="username"><input type="password" id="crm-pw" placeholder="Password" autocomplete="current-password" style="width:100%;margin:0 0 10px">
       <button class="btn pri" id="crm-go">Sign in</button><div class="note" id="crm-msg"></div></form>`;
     body.querySelector('form').onsubmit = async e => {
