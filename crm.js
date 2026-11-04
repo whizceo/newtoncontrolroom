@@ -368,14 +368,14 @@ const CRM = (() => {
   async function stats() {  // real counts straight from the CRM, no estimates
     const n = r => r.then(x => x.count ?? 0), all = sb.from('contacts').select('id', {count: 'exact', head: true}).neq('list', 'GHL');  // GHL imports are not List 1 owners
     const [tot, rep, pos, pip] = await Promise.all([n(all), n(sb.from('contacts').select('id', {count: 'exact', head: true}).not('last_inbound_at', 'is', null)),
-      n(sb.from('contacts').select('id', {count: 'exact', head: true}).contains('tags', ['positive'])), n(sb.from('deals').select('id', {count: 'exact', head: true}).is('lost_reason', null))]);
+      n(sb.from('contacts').select('id', {count: 'exact', head: true}).contains('tags', ['positive'])), n(sb.from('deals').select('id', {count: 'exact', head: true}).is('lost_reason', null).eq('pipeline', 'seller'))]);
     const box = document.getElementById('crm-ck'); if (!box) return;
     box.innerHTML = kpi('Owners in the CRM', fmt(tot), 'owners on file') + kpi('Replied', fmt(rep), pctf(rep, tot) + ' wrote back') +
-      kpi('Positive', fmt(pos), pctf(pos, rep, 0) + ' of replies', {accent: pos}) + kpi('In the pipeline', fmt(pip), 'open deals, buyers + sellers');
+      kpi('Positive', fmt(pos), pctf(pos, rep, 0) + ' of replies', {accent: pos}) + kpi('In the pipeline', fmt(pip), 'open owner deals');
     const z = document.getElementById('crm-zig');
     const lv = [{l: 'Owners on file', v: tot, s: 'every owner in the CRM'}, {l: 'Replied', v: rep, s: 'wrote back'}, {l: 'Positive', v: pos, s: 'want to talk'}, {l: 'In the pipeline', v: pip, s: 'open deals'}];
     if (z) z.innerHTML = zig(lv) + `<div class="zigl">${lv.slice().reverse().map((l, k) => `<div class="${k ? '' : 'top'}"><b>${fmt(l.v)}</b><span>${l.l}</span><em>${l.s}</em></div>`).join('')}</div>`;  // phone: numbers as tiles under the pyramid
-    const {data} = await sb.from('deals').select('id,stage,value_estimate,contacts(id,full_name,first_name,last_name,email,company,owner_type)').is('lost_reason', null);
+    const {data} = await sb.from('deals').select('id,stage,value_estimate,contacts(id,full_name,first_name,last_name,email,company,owner_type)').is('lost_reason', null).eq('pipeline', 'seller');
     const g = document.getElementById('crm-gold'); if (!g) return;
     const ds = (data || []).sort((a, b) => (+b.value_estimate || 0) - (+a.value_estimate || 0)), mx = Math.max(1, ...ds.map(d => +d.value_estimate || 0));
     g.innerHTML = ds.length ? ds.map((d, i) => { const c = d.contacts || {}, v = +d.value_estimate || 0;
@@ -406,22 +406,22 @@ const CRM = (() => {
     if (error) { box.innerHTML = empty(error.message); return }
     const tags = c => (c.tags || []).filter(x => x !== 'positive').map(x => `<span class="tag ${x === 'not_interested' ? 'cold' : ''}">${esc(x.replace(/_/g, ' '))}</span>`).join('') + ((c.tags || []).includes('positive') ? '<span class="tag hot">positive</span>' : '');
     box.innerHTML = (data.length ? `<div class="row h"><div>Owner</div><div>Business</div><div>Type</div><div>Fit</div><div>Stage</div><div>Last reply</div></div>` +
-      data.map(c => `<div class="row" data-c="${c.id}"><div class="who">${orb(c)}<div>${esc(name(c))}<small>${esc(c.email)}</small></div></div><div>${esc(c.company || '')}<small>${esc(c.city || '')}</small></div><div>${esc(c.owner_type || '')} ${c.circle ? `<span class="tag">${esc(c.circle)}</span>` : ''}</div><div>${fit(c.fit_score)}</div><div>${(st => st ? `<span class="pill">${esc(st)}</span>` : '—')(c.deals?.find(d => d.pipeline === 'seller')?.stage)}<small style="margin-top:4px">${tags(c)}</small></div><div class="${c.last_inbound_at ? '' : 'hint'}">${c.last_inbound_at ? wait(hrs(c.last_inbound_at)) + ' ago' : '—'}</div></div>`).join('')
+      data.map(c => `<div class="row" data-c="${c.id}"><div class="who">${orb(c)}<div>${esc(name(c))}<small>${esc(c.email)}</small></div></div><div>${esc(c.company || '')}<small>${esc(c.city || '')}</small></div><div>${esc(c.owner_type || '')} ${c.circle ? `<span class="tag">${esc(c.circle)}</span>` : ''}</div><div>${fit(c.fit_score)}</div><div>${(st => st ? `<span class="pill">${esc(st)}</span>` : '—')((c.deals?.find(d => d.pipeline === 'seller') || c.deals?.[0])?.stage)}<small style="margin-top:4px">${tags(c)}</small></div><div class="${c.last_inbound_at ? '' : 'hint'}">${c.last_inbound_at ? wait(hrs(c.last_inbound_at)) + ' ago' : '—'}</div></div>`).join('')
       : empty('No owners match these filters')) +
-      `<div class="tb" style="margin:14px 0 0;justify-content:space-between"><span class="hint">${fmt(count)} owners${count > PAGE ? ` · page ${q.page + 1} of ${Math.ceil(count / PAGE)}` : ''}</span><span><button class="btn" data-pg="-1" ${q.page ? '' : 'disabled'}>← Prev</button> <button class="btn" data-pg="1" ${(q.page + 1) * PAGE >= count ? 'disabled' : ''}>Next →</button></span></div>`;
+      `<div class="tb" style="margin:14px 0 0;justify-content:space-between"><span class="hint">${fmt(count)} contacts${count > PAGE ? ` · page ${q.page + 1} of ${Math.ceil(count / PAGE)}` : ''}</span><span><button class="btn" data-pg="-1" ${q.page ? '' : 'disabled'}>← Prev</button> <button class="btn" data-pg="1" ${(q.page + 1) * PAGE >= count ? 'disabled' : ''}>Next →</button></span></div>`;
     box.querySelectorAll('[data-pg]').forEach(b => b.onclick = () => { q.page += +b.dataset.pg; list(); document.getElementById('main')?.scrollTo(0, 0) });
     bindRows(box);
   }
 
   async function exportCsv() {
     const cols = ['full_name', 'email', 'phone', 'company', 'owner_type', 'circle', 'fit_score', 'street', 'city', 'zip', 'website', 'last_inbound_at'];
-    const {data, error} = await (await query(cols.join(','))).r.range(0, 4999);
-    if (fail(error)) return;
+    const data = [];
+    for (let i = 0; ; i += 1000) { const {data: d, error} = await (await query(cols.join(','))).r.range(i, i + 999); if (fail(error)) return; data.push(...d); if (d.length < 1000) break }
     const cell = x => { const s = Array.isArray(x) ? x.join(' ') : String(x ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s };
-    const rows = [cols.concat('stage').join(',')].concat(data.map(c => cols.map(k => cell(c[k])).concat(cell(c.deals?.find(d => d.pipeline === 'seller')?.stage)).join(',')));
+    const rows = [cols.concat('stage').join(',')].concat(data.map(c => cols.map(k => cell(c[k])).concat(cell((c.deals?.find(d => d.pipeline === 'seller') || c.deals?.[0])?.stage)).join(',')));
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([rows.join('\n')], {type: 'text/csv'}));
     a.download = `newton-contacts-${dayKey(Date.now())}.csv`; a.click(); URL.revokeObjectURL(a.href);
-    flash(`Exported ${data.length} owners`);
+    flash(`Exported ${data.length} contacts`);
   }
 
   function newContact() {
@@ -511,7 +511,7 @@ const CRM = (() => {
     if (fail(error)) return;
     const prevScroll = document.querySelector('#crm .drawer')?.scrollTop || 0;
     const {d, close} = shell();
-    const deal = (deals || []).find(x => x.pipeline === 'seller'), tags = c.tags || [], cold = tags.includes('not_interested');
+    const deal = (deals || []).find(x => x.pipeline === 'seller') || (deals || []).find(x => x.pipeline === 'buyer'), tags = c.tags || [], cold = tags.includes('not_interested');
     const waiting = c.last_inbound_at && (!c.last_outbound_at || c.last_outbound_at < c.last_inbound_at);
     const kv = (k, val, href) => val || val === 0 ? `<span>${k}</span><div>${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(val)}</a>` : esc(val)}</div>` : '';
     const site = c.website && (/^https?:/.test(c.website) ? c.website : 'https://' + c.website);
@@ -521,7 +521,7 @@ const CRM = (() => {
         <button class="btn" data-held>Call held</button><button class="btn" data-noshow>No-show</button><button class="btn" data-cold>${cold ? 'Mark interested again' : 'Not interested'}</button></div>
       <div data-extra></div>
       <h5>Deal</h5><div class="box">${deal ? `<form class="fg" data-deal action="javascript:void 0">
-          <label>Stage<select name="stage">${stages.seller.map(s => `<option ${s.name === deal.stage ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>
+          <label>Stage<select name="stage">${(stages[deal.pipeline] || stages.seller).map(s => `<option ${s.name === deal.stage ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>
           <label>Value estimate ($)<input name="value_estimate" type="number" min="0" step="1000" value="${deal.value_estimate ?? ''}"></label>
           <label>Next step<input name="next_action" value="${esc(deal.next_action || '')}" placeholder="e.g. Discovery call"></label>
           <label>When<input name="next_action_at" type="datetime-local" value="${localInput(deal.next_action_at)}"></label>
@@ -539,7 +539,7 @@ const CRM = (() => {
     d.scrollTop = prevScroll;
 
     const reopen = () => { refresh(); return open(id) };
-    const deal0 = stage => deal ? sb.from('deals').update({stage}).eq('id', deal.id) : sb.from('deals').insert({contact_id: id, pipeline: 'seller', stage});
+    const deal0 = stage => deal ? sb.from('deals').update({stage: deal.pipeline === 'buyer' ? ({'Discovery Call Held': 'Showing / Buyer Meeting'}[stage] || deal.stage) : stage}).eq('id', deal.id) : sb.from('deals').insert({contact_id: id, pipeline: 'seller', stage});
     d.querySelector('[data-x]').onclick = close;
     d.querySelectorAll('.clip').forEach(p => p.onclick = () => p.classList.remove('clip'));
     d.querySelector('[data-replied]')?.addEventListener('click', async () => { if (!fail((await markReplied(id)).error)) { flash('Marked as replied'); reopen() } });
