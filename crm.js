@@ -350,7 +350,7 @@ const CRM = (() => {
       ${panel({span: 7, title: 'From everyone to the ones that matter', sub: 'Each tier up = owners who moved closer to a sale', body: '<div class="zig" id="crm-zig"></div>'})}
       ${panel({span: 5, title: 'The owners worth your time', sub: 'Every open deal, biggest property value first', body: '<div class="gold" id="crm-gold"><div class="hint">Loading…</div></div>'})}
       <div class="s12"><div class="tb glass"><input type="search" id="crm-q" placeholder="Search name, business, email, city" value="${esc(q.text)}">
-        ${sel('crm-show', [['waiting', 'Waiting on you'], ['replied', 'Replied'], ['pipeline', 'In pipeline'], ['cold', 'Not interested']], q.show, 'Everyone')}
+        ${sel('crm-show', [['waiting', 'Waiting on you'], ['replied', 'Replied'], ['pipeline', 'In pipeline'], ['cold', 'Not interested'], ['bbs', 'BizBuySell buyers (from GHL)'], ['ghlr', 'Replied in GHL']], q.show, 'Everyone')}
         ${sel('crm-t', ['Both', 'Business', 'Property'].map(x => [x, x]), q.type, 'All types')}
         ${sel('crm-ci', ['C1', 'C2', 'C3', 'C4'].map(x => [x, x]), q.circle, 'All circles')}
         ${sel('crm-s', stages.seller.map(s => [s.name, s.name]), q.stage, 'Any stage')}
@@ -366,7 +366,7 @@ const CRM = (() => {
     list(); stats();
   }
   async function stats() {  // real counts straight from the CRM, no estimates
-    const n = r => r.then(x => x.count ?? 0), all = sb.from('contacts').select('id', {count: 'exact', head: true});
+    const n = r => r.then(x => x.count ?? 0), all = sb.from('contacts').select('id', {count: 'exact', head: true}).neq('list', 'GHL');  // GHL imports are not List 1 owners
     const [tot, rep, pos, pip] = await Promise.all([n(all), n(sb.from('contacts').select('id', {count: 'exact', head: true}).not('last_inbound_at', 'is', null)),
       n(sb.from('contacts').select('id', {count: 'exact', head: true}).contains('tags', ['positive'])), n(sb.from('deals').select('id', {count: 'exact', head: true}).is('lost_reason', null))]);
     const box = document.getElementById('crm-ck'); if (!box) return;
@@ -393,6 +393,8 @@ const CRM = (() => {
     if (q.stage) r = r.eq('deals.stage', q.stage);
     if (q.show === 'replied') r = r.not('last_inbound_at', 'is', null);
     if (q.show === 'cold') r = r.contains('tags', ['not_interested']);
+    if (q.show === 'bbs') r = r.contains('tags', ['bizbuysell']);
+    if (q.show === 'ghlr') r = r.contains('tags', ['ghl_replied']);
     if (q.show === 'waiting') { const {data} = await sb.from('v_waiting').select('id'); r = r.in('id', (data || []).map(x => x.id).concat(['00000000-0000-0000-0000-000000000000'])) }
     const o = {reply: ['last_inbound_at', false], fit: ['fit_score', false], name: ['full_name', true], new: ['created_at', false]}[q.sort] || ['last_inbound_at', false];
     return {r: r.order(o[0], {ascending: o[1], nullsFirst: false}).order('fit_score', {ascending: false, nullsFirst: false})};  // wrapped: an awaited builder would run
