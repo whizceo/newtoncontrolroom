@@ -366,7 +366,7 @@ const CRM = (() => {
     list(); stats();
   }
   async function stats() {  // real counts straight from the CRM, no estimates
-    const n = r => r.then(x => x.count ?? 0), all = sb.from('contacts').select('id', {count: 'exact', head: true}).neq('list', 'GHL');  // GHL imports are not List 1 owners
+    const n = r => r.then(x => x.count ?? 0), all = sb.from('contacts').select('id', {count: 'exact', head: true}).not('list', 'in', '(GHL,Buildout)');  // GHL imports + Buildout buyers are not List 1 owners
     const [tot, rep, pos, pip] = await Promise.all([n(all), n(sb.from('contacts').select('id', {count: 'exact', head: true}).not('last_inbound_at', 'is', null)),
       n(sb.from('contacts').select('id', {count: 'exact', head: true}).contains('tags', ['positive'])), n(sb.from('deals').select('id', {count: 'exact', head: true}).is('lost_reason', null).eq('pipeline', 'seller'))]);
     const box = document.getElementById('crm-ck'); if (!box) return;
