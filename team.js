@@ -256,9 +256,10 @@ const TEAM = (() => {
     spots.forEach(({x, z}, i) => {
       box(2.6, .1, 1.2, wood, x, 1.05, z - .55); for (const dx of [-1.2, 1.2]) box(.08, 1, 1.1, leg, x + dx, .52, z - .55);
       box(1.3, .78, .06, M(0x0e0c0b), x - .15, 1.62, z - .95); const s = box(1.2, .68, .02, scr, x - .15, 1.62, z - .91); s.castShadow = false;
-      box(.1, .3, .1, leg, x - .15, 1.2, z - .97); const kb = box(.7, .03, .25, M(0x2a2523), ids[i] === 'flash' ? x - .05 : x - .15, 1.12, ids[i] === 'flash' ? z - .15 : z - .45); if (ids[i] === 'flash') kb.rotation.y = -.45;
+      box(.1, .3, .1, leg, x - .15, 1.2, z - .97); box(.7, .03, .25, M(0x2a2523), x - .15, 1.12, z - .45);
       if (!['milo', 'jada', 'nadia', 'dex'].includes(ids[i])) cyl(.06, .05, .14, 7, M(0xe9ddd0), x + .85, 1.17, z - .5);  // mug on desk
-      const ch = new T.Group(); ch.position.set(x + .9, 0, z - .1); scene.add(ch);  // chair pushed aside
+      if (!['milo', 'dex'].includes(ids[i])) return;
+      const ch = new T.Group(); ch.position.set(x + .9, 0, z - .1); scene.add(ch);  // chair pushed aside (nobody sitting)
       box(.6, .1, .6, M(0x231d1b), 0, .62, 0, ch); box(.6, .7, .08, M(0x231d1b), 0, 1, -.28, ch); cyl(.04, .04, .55, 6, leg, 0, .32, 0, ch); ch.rotation.y = .5;
     });
 
@@ -302,10 +303,32 @@ const TEAM = (() => {
 
     // people
     const P = [];
+    // office chair (5-star base); the seat tilts back for people leaning back
+    const chair = (cx, cz, ry, tilt = 0) => { const c = new T.Group(); c.position.set(cx, 0, cz); c.rotation.y = ry; scene.add(c);
+      cyl(.04, .04, .42, 6, leg, 0, .23, 0, c); for (let k = 0; k < 5; k++) { const sp = box(.34, .04, .06, leg, Math.cos(k * 1.257) * .15, .04, Math.sin(k * 1.257) * .15, c); sp.rotation.y = -k * 1.257 }
+      const st = new T.Group(); st.position.y = .47; st.rotation.x = tilt; c.add(st);
+      box(.6, .08, .6, M(0x231d1b), 0, 0, .08, st); box(.6, .72, .08, M(0x231d1b), 0, .42, -.24, st);
+      const ph = Math.random() * 6; FX.push(t => { c.rotation.y = ry + Math.sin(t * .35 + ph) * .05 }); return c };
+    const LEG = (g, hr, kr, hl = hr, kl = kr, spread = 0) => { const L = g.userData.legs; L.r.h.rotation.set(hr, 0, -spread); L.r.k.rotation.x = kr; L.l.h.rotation.set(hl, 0, spread); L.l.k.rotation.x = kl };
+    // sit someone on a chair; tilt < 0 = leaning back. Hips stay on the seat, thighs level.
+    const seat = (g, cx, cz, ry, tilt = 0) => { const c = chair(cx, cz, ry, tilt); c.add(g); g.rotation.order = 'YXZ';
+      g.position.set(0, .55 - .93 * Math.cos(tilt), -.93 * Math.sin(tilt) + .02); g.rotation.x = tilt; const hip = -Math.PI / 2 - tilt; LEG(g, hip, Math.PI / 2); return hip };
+    function place(id, g, x, z) {
+      if (id === 'flash') seat(g, x - .15, z + .12, Math.PI - .2);                                    // at the keyboard
+      else if (id === 'reva') { const h = seat(g, x - 1.0, z + .55, -1.2, -.12); LEG(g, h, Math.PI / 2, h + .18, Math.PI / 2 - .4, .06) }   // swivelled out, writing
+      else if (id === 'nadia') { seat(g, x - 1.45, z + .2, Math.PI - .9, -.35); LEG(g, -1.92, 0, -1.86, .08, .03) }  // feet up on the desk, reading
+      else if (id === 'tess') seat(g, x - .5, z + .6, Math.PI + .6, -.08);                             // turned to the screen, tablet
+      else if (id === 'milo') { scene.add(g); g.rotation.order = 'YXZ'; g.position.set(x + 1.0, 1.2 - .93, z - .3); g.rotation.y = 1.35;  // sitting on the desk corner
+        LEG(g, -Math.PI / 2 + .2, Math.PI / 2 - .15, -Math.PI / 2 + .05, Math.PI / 2 + .25, .05) }
+      else if (id === 'dex') { scene.add(g); g.position.set(x + 1.65, 0, z + .4); g.rotation.y = -2.35 }  // bringing files to his desk
+      else if (id === 'jada') seat(g, x + 1.0, z + .6, Math.PI / 2 - .15, -.05);                       // turned to wave at RAY
+      else if (id === 'ray') { const h = seat(g, x - .35, z + .55, Math.PI - 1.0, -.22); LEG(g, h, Math.PI / 2, h + .25, Math.PI / 2 - .55, .1) }  // leaning back on the phone
+      else { scene.add(g); g.position.set(x - .9, 0, z + .35) }
+    }
     A.forEach((a, i) => { const g = person(T, M, box, cyl, LOOK[a.id] || LOOK.flash, a.gender, ACT[a.id] || 'idle');
-      g.position.set(spots[i].x - .9, 0, spots[i].z + .35); g.rotation.y = .15 - (i % 4) * .08;
-      if (a.id === 'flash') { g.position.set(spots[i].x - .55, 0, spots[i].z + .3); g.rotation.y = Math.PI - .75; g.userData.keep = true } Object.assign(g.userData, {id: a.id, base: g.rotation.y, ph: i * 1.3}); scene.add(g); P.push(g);
-      const halo = new T.Mesh(new T.RingGeometry(.45, .55, 28), new T.MeshBasicMaterial({color: 0xe42b0c, transparent: true, opacity: 0})); halo.rotation.x = -Math.PI / 2; halo.position.set(g.position.x, .03, g.position.z); scene.add(halo); g.userData.halo = halo });
+      place(a.id, g, spots[i].x, spots[i].z); Object.assign(g.userData, {id: a.id, base: g.rotation.y, y0: g.position.y, ph: i * 1.3, keep: true}); P.push(g);
+      scene.updateMatrixWorld(true); const w = new T.Vector3(); g.userData.legs.r.h.getWorldPosition(w);
+      const halo = new T.Mesh(new T.RingGeometry(.45, .55, 28), new T.MeshBasicMaterial({color: 0xe42b0c, transparent: true, opacity: 0})); halo.rotation.x = -Math.PI / 2; halo.position.set(w.x, .03, w.z); scene.add(halo); g.userData.halo = halo });
 
     // name tags
     const tags = document.getElementById('t-tags');
@@ -345,15 +368,19 @@ const TEAM = (() => {
       if (!sel) { const r = HOME.p.z, a = yaw + Math.sin(t * .12) * .06; goal.p.set(Math.sin(a) * r, HOME.p.y, Math.cos(a) * r) }
       cur.p.lerp(goal.p, Math.min(1, k * 2.4)); cur.t.lerp(goal.t, Math.min(1, k * 2.4)); cam.position.copy(cur.p); cam.lookAt(cur.t);
       for (const g of P) { const u = g.userData, on = u.id === sel || u.id === hover;
-        g.position.y = Math.sin(t * 1.6 + u.ph) * .015; g.rotation.y = u.base + Math.sin(t * .5 + u.ph) * (u.keep ? .03 : .08) + (u.id === sel && !u.keep ? -u.base : 0) * .9;
+        g.position.y = u.y0 + Math.sin(t * 1.6 + u.ph) * .006; g.rotation.y = u.base + Math.sin(t * .5 + u.ph) * (u.keep ? .03 : .08) + (u.id === sel && !u.keep ? -u.base : 0) * .9;
         u.head.rotation.y = Math.sin(t * .7 + u.ph) * (u.look ? .07 : .18); u.head.rotation.x = (u.look || 0) + Math.sin(t * .9 + u.ph) * .04; if (u.anim) u.anim(t + u.ph);
         u.halo.material.opacity += ((on ? .85 : 0) - u.halo.material.opacity) * .15; u.halo.scale.setScalar(1 + Math.sin(t * 3) * .04) }
       for (const f of FX) f(t);
       R.render(scene, cam);
       // tags follow heads
       const W = cv.clientWidth, H = cv.clientHeight;
+      const placed = [];  // keep labels from sitting on top of each other
       tags.querySelectorAll('.tag').forEach(el => { const g = P.find(x => x.userData.id === el.dataset.t); if (!g) return; g.userData.head.getWorldPosition(v3); v3.y += .55; v3.project(cam);
-        el.style.transform = `translate(${(v3.x * .5 + .5) * W}px,${(-v3.y * .5 + .5) * H}px) translate(-50%,-100%)`; el.style.display = v3.z < 1 ? '' : 'none';
+        const px = (v3.x * .5 + .5) * W; let py = (-v3.y * .5 + .5) * H; const tw = el.offsetWidth || 120, th = (el.offsetHeight || 34) + 4;
+        for (let k = 0; k < 4; k++) { const hit = placed.find(q => Math.abs(q.x - px) < (q.w + tw) / 2 && Math.abs(q.y - py) < th); if (!hit) break; py = hit.y + th }
+        placed.push({x: px, y: py, w: tw});
+        el.style.transform = `translate(${px}px,${py}px) translate(-50%,-100%)`; el.style.display = v3.z < 1 ? '' : 'none';
         el.classList.toggle('sel', el.dataset.t === hover) });
     })();
   }
@@ -366,8 +393,8 @@ const TEAM = (() => {
     const hold = (arm, ax = -.35, inn = .3, ex = -1.3) => set(arm, ax, -arm.s * inn, ex);
     const board = (w, h, m, y, z, tilt) => { const b = new T.Group(); b.position.set(0, y, z); b.rotation.x = tilt; g.add(b); box(w, .025, h, m, 0, 0, 0, b); return b };
     if (kind === 'type') {                       // at the keyboard
-      hold(r, -.15, .12, -1.05); hold(l, -.15, .12, -1.05); U.look = .22;
-      U.anim = t => { r.e.rotation.x = -1.05 + Math.max(0, Math.sin(t * 15)) * .09; l.e.rotation.x = -1.05 + Math.max(0, Math.sin(t * 15 + 1.7)) * .09 };
+      hold(r, -1.3, .14, -.3); hold(l, -1.3, .14, -.3); U.look = .18;
+      U.anim = t => { r.e.rotation.x = -.3 + Math.max(0, Math.sin(t * 15)) * .09; l.e.rotation.x = -.3 + Math.max(0, Math.sin(t * 15 + 1.7)) * .09 };
     } else if (kind === 'write') {               // clipboard + pen
       hold(l, -.35, .32, -1.3); hold(r, -.3, .38, -1.2); U.look = .32;
       const b = board(.3, .4, M(0x3a2c24), 1.36, .43, .55); box(.26, .01, .34, M(0xf3efeb), 0, .018, .01, b);
@@ -406,8 +433,10 @@ const TEAM = (() => {
     const g = new T.Group(), f = gender === 'f', skin = M(SKIN), skinD = M(SKIN_D), shirt = M(L.shirt), under = M(L.under), pants = M(L.pants), shoe = M(L.shoe), hair = M(L.hair), dark = M(0x111010);
     const sw = f ? .9 : 1;  // slimmer frame
     // shoes + rolled cuffs
-    for (const s of [-1, 1]) { box(.2, .13, .36, shoe, s * .13 * sw, .065, .04, g); box(.21, .03, .37, M(0xf3efeb), s * .13 * sw, .13, .04, g);
-      cyl(.105, .1, .14, 7, pants, s * .13 * sw, .22, 0, g); cyl(.085, .1, .66, 7, pants, s * .13 * sw, .62, 0, g) }
+    const legJ = s => { const h = new T.Group(); h.position.set(s * .13 * sw, .93, 0); g.add(h); cyl(.1, .092, .46, 7, pants, 0, -.22, 0, h);
+      const k = new T.Group(); k.position.y = -.44; h.add(k); cyl(.09, .095, .3, 7, pants, 0, -.14, 0, k); cyl(.105, .1, .14, 7, pants, 0, -.27, 0, k);
+      box(.21, .03, .37, M(0xf3efeb), 0, -.36, .04, k); box(.2, .13, .36, shoe, 0, -.425, .04, k); return {h, k} };
+    g.userData.legs = {r: legJ(1), l: legJ(-1)};
     box(.46 * sw, .18, .26, pants, 0, .98, 0, g);                                                // hips
     const torso = cyl(.25 * sw, .23 * sw, .6, 6, under, 0, 1.36, 0, g); torso.scale.z = .62;        // under-shirt
     for (const s of [-1, 1]) { const p = box(.2 * sw, .62, .3, shirt, s * .16 * sw, 1.37, -.005, g); p.rotation.z = s * .04 }  // open shirt panels
