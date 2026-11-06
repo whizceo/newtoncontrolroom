@@ -256,16 +256,55 @@ const TEAM = (() => {
     spots.forEach(({x, z}, i) => {
       box(2.6, .1, 1.2, wood, x, 1.05, z - .55); for (const dx of [-1.2, 1.2]) box(.08, 1, 1.1, leg, x + dx, .52, z - .55);
       box(1.3, .78, .06, M(0x0e0c0b), x - .15, 1.62, z - .95); const s = box(1.2, .68, .02, scr, x - .15, 1.62, z - .91); s.castShadow = false;
-      box(.1, .3, .1, leg, x - .15, 1.2, z - .97); box(.7, .03, .25, M(0x2a2523), x - .15, 1.12, z - .45);
-      cyl(.06, .05, .14, 7, M(0xe9ddd0), x + .85, 1.17, z - .5);                       // mug on desk
+      box(.1, .3, .1, leg, x - .15, 1.2, z - .97); const kb = box(.7, .03, .25, M(0x2a2523), ids[i] === 'flash' ? x - .05 : x - .15, 1.12, ids[i] === 'flash' ? z - .15 : z - .45); if (ids[i] === 'flash') kb.rotation.y = -.45;
+      if (!['milo', 'jada', 'nadia', 'dex'].includes(ids[i])) cyl(.06, .05, .14, 7, M(0xe9ddd0), x + .85, 1.17, z - .5);  // mug on desk
       const ch = new T.Group(); ch.position.set(x + .9, 0, z - .1); scene.add(ch);  // chair pushed aside
       box(.6, .1, .6, M(0x231d1b), 0, .62, 0, ch); box(.6, .7, .08, M(0x231d1b), 0, 1, -.28, ch); cyl(.04, .04, .55, 6, leg, 0, .32, 0, ch); ch.rotation.y = .5;
     });
 
+    // personal desk stuff, so no two desks look alike
+    const FX = [], paper = M(0xf3efeb), ink = M(0x111010);
+    function decor(id, x, z) {
+      const top = 1.1, mesh = (geo, m, px, py, pz) => { const o = new T.Mesh(geo, m); o.position.set(px, py, pz); o.castShadow = true; scene.add(o); return o };
+      const plant = (px, pz, h) => { cyl(.1, .08, .18, 7, M(0xe9ddd0), px, top + .09, pz); mesh(new T.IcosahedronGeometry(h, 0), M(0x4f6b3c, {flatShading: true}), px, top + .18 + h * .8, pz) };
+      const deskPhone = (px, pz) => { box(.26, .06, .2, ink, px, top + .03, pz); const hs = box(.24, .05, .07, M(0x1f1b19), px, top + .09, pz - .05); hs.rotation.z = .05;
+        const led = box(.03, .015, .03, M(0x330000, {emissive: 0xe42b0c, emissiveIntensity: 0}), px + .09, top + .065, pz + .06); return led };
+      if (id === 'flash') {                                             // two screens + headset: lives on the keyboard
+        box(1.0, .62, .06, M(0x0e0c0b), x + .95, 1.6, z - .85).rotation.y = -.4; const s2 = box(.92, .54, .02, scr, x + .935, 1.6, z - .815); s2.rotation.y = -.4; s2.castShadow = false;
+        mesh(new T.TorusGeometry(.1, .022, 6, 14, Math.PI), ink, x + .8, top + .02, z - .35).rotation.x = -Math.PI / 2;
+      } else if (id === 'reva') {                                       // notebook, pen, sticky notes on the screen
+        box(.3, .02, .4, paper, x + .5, top + .01, z - .3).rotation.y = .3; cyl(.012, .012, .26, 5, M(0xe42b0c), x + .58, top + .03, z - .3).rotation.z = Math.PI / 2;
+        [[0xffc38a, -.62, 1.88], [0xff8a3d, -.62, 1.76], [0xffc38a, .32, 1.92]].forEach(([c, dx, y]) => box(.1, .1, .01, M(c), x - .15 + dx, y, z - .9));
+      } else if (id === 'nadia') {                                      // stack of books + plant
+        [[0x8e1d0b, .05], [0xffc38a, -.1], [0x55504c, .15]].forEach(([c, r], k) => box(.36, .07, .26, M(c), x + .55, top + .035 + k * .07, z - .55).rotation.y = r);
+        plant(x + 1.0, z - .95, .17);
+      } else if (id === 'tess') {                                       // desk calendar + phone
+        const cal = new T.Group(); cal.position.set(x + .55, top, z - .35); scene.add(cal);
+        for (const sgn of [-1, 1]) { const pnl = box(.26, .2, .01, paper, 0, .09, sgn * .04, cal); pnl.rotation.x = sgn * .35 } box(.27, .05, .02, M(0xe42b0c), 0, .2, 0, cal);
+        deskPhone(x + .95, z - .7);
+      } else if (id === 'milo') {                                       // alarm clock + thermos
+        const clock = cyl(.1, .1, .07, 10, M(0xe42b0c), x + .6, top + .11, z - .6); clock.rotation.x = Math.PI / 2; cyl(.08, .08, .075, 10, paper, x + .6, top + .11, z - .6).rotation.x = Math.PI / 2;
+        cyl(.06, .06, .3, 8, M(0x55504c), x + .95, top + .15, z - .8);
+      } else if (id === 'dex') {                                        // paper stacks, tray, archive box under the desk
+        [[.5, .2], [.75, .12], [1.0, .26]].forEach(([dx, h]) => box(.26, h, .34, paper, x + dx, top + h / 2, z - .45).rotation.y = (dx - .7) * .3);
+        box(.36, .05, .28, M(0xff8a3d), x + .7, top + .025, z - .9); box(.55, .38, .42, M(0xb85a1e), x + .6, .19, z - .6);
+      } else if (id === 'jada') {                                       // flowers, a gift, a framed photo
+        cyl(.06, .08, .22, 7, M(0xe9ddd0), x + .95, top + .11, z - .75);
+        [[0xe42b0c, 0, .0], [0xffc38a, .06, .05], [0xff8a3d, -.06, -.03]].forEach(([c, dx, dz]) => mesh(new T.IcosahedronGeometry(.055, 0), M(c, {flatShading: true}), x + .95 + dx, top + .3, z - .75 + dz));
+        box(.22, .18, .22, M(0xff8a3d), x + .55, top + .09, z - .35); box(.23, .03, .05, M(0xffc38a), x + .55, top + .19, z - .35); box(.05, .03, .23, M(0xffc38a), x + .55, top + .19, z - .35);
+        const fr = box(.2, .16, .02, M(0x1f1b19), x + .45, top + .1, z - .85); fr.rotation.x = -.2; box(.16, .12, .01, M(0xffc38a), x + .45, top + .1, z - .84).rotation.x = -.2;
+      } else if (id === 'ray') {                                        // ringing desk phone + headset
+        const led = deskPhone(x + .6, z - .4); FX.push(t => { led.material.emissiveIntensity = Math.sin(t * 7) > .2 ? 2.2 : 0 });
+        mesh(new T.TorusGeometry(.1, .022, 6, 14, Math.PI), ink, x + 1.0, top + .02, z - .8).rotation.x = -Math.PI / 2;
+      }
+    }
+    spots.forEach(({x, z}, i) => decor(ids[i], x, z));
+
     // people
     const P = [];
-    A.forEach((a, i) => { const g = person(T, M, box, cyl, LOOK[a.id] || LOOK.flash, a.gender);
-      g.position.set(spots[i].x - .9, 0, spots[i].z + .35); g.rotation.y = .15 - (i % 4) * .08; Object.assign(g.userData, {id: a.id, base: g.rotation.y, ph: i * 1.3}); scene.add(g); P.push(g);
+    A.forEach((a, i) => { const g = person(T, M, box, cyl, LOOK[a.id] || LOOK.flash, a.gender, ACT[a.id] || 'idle');
+      g.position.set(spots[i].x - .9, 0, spots[i].z + .35); g.rotation.y = .15 - (i % 4) * .08;
+      if (a.id === 'flash') { g.position.set(spots[i].x - .55, 0, spots[i].z + .3); g.rotation.y = Math.PI - .75; g.userData.keep = true } Object.assign(g.userData, {id: a.id, base: g.rotation.y, ph: i * 1.3}); scene.add(g); P.push(g);
       const halo = new T.Mesh(new T.RingGeometry(.45, .55, 28), new T.MeshBasicMaterial({color: 0xe42b0c, transparent: true, opacity: 0})); halo.rotation.x = -Math.PI / 2; halo.position.set(g.position.x, .03, g.position.z); scene.add(halo); g.userData.halo = halo });
 
     // name tags
@@ -306,9 +345,10 @@ const TEAM = (() => {
       if (!sel) { const r = HOME.p.z, a = yaw + Math.sin(t * .12) * .06; goal.p.set(Math.sin(a) * r, HOME.p.y, Math.cos(a) * r) }
       cur.p.lerp(goal.p, Math.min(1, k * 2.4)); cur.t.lerp(goal.t, Math.min(1, k * 2.4)); cam.position.copy(cur.p); cam.lookAt(cur.t);
       for (const g of P) { const u = g.userData, on = u.id === sel || u.id === hover;
-        g.position.y = Math.sin(t * 1.6 + u.ph) * .015; g.rotation.y = u.base + Math.sin(t * .5 + u.ph) * .08 + (u.id === sel ? -u.base : 0) * .9;
-        g.userData.head.rotation.y = Math.sin(t * .7 + u.ph) * .18; g.userData.head.rotation.x = Math.sin(t * .9 + u.ph) * .04;
+        g.position.y = Math.sin(t * 1.6 + u.ph) * .015; g.rotation.y = u.base + Math.sin(t * .5 + u.ph) * (u.keep ? .03 : .08) + (u.id === sel && !u.keep ? -u.base : 0) * .9;
+        u.head.rotation.y = Math.sin(t * .7 + u.ph) * (u.look ? .07 : .18); u.head.rotation.x = (u.look || 0) + Math.sin(t * .9 + u.ph) * .04; if (u.anim) u.anim(t + u.ph);
         u.halo.material.opacity += ((on ? .85 : 0) - u.halo.material.opacity) * .15; u.halo.scale.setScalar(1 + Math.sin(t * 3) * .04) }
+      for (const f of FX) f(t);
       R.render(scene, cam);
       // tags follow heads
       const W = cv.clientWidth, H = cv.clientHeight;
@@ -319,7 +359,50 @@ const TEAM = (() => {
   }
 
   // a low-poly person, ~1.8 tall, standing like the reference: one hand in a pocket, coffee in the other
-  function person(T, M, box, cyl, L, gender) {
+  // what each person is doing at their desk (small, looping, job-related)
+  const ACT = {flash: 'type', reva: 'write', nadia: 'read', tess: 'tablet', milo: 'coffee', dex: 'files', jada: 'wave', ray: 'phone'};
+  function act(T, M, box, cyl, g, r, l, kind, dark) {
+    const U = g.userData, set = (arm, ax, az, ex, ez = 0) => { arm.a.rotation.set(ax, 0, az); arm.e.rotation.set(ex, 0, ez) };
+    const hold = (arm, ax = -.35, inn = .3, ex = -1.3) => set(arm, ax, -arm.s * inn, ex);
+    const board = (w, h, m, y, z, tilt) => { const b = new T.Group(); b.position.set(0, y, z); b.rotation.x = tilt; g.add(b); box(w, .025, h, m, 0, 0, 0, b); return b };
+    if (kind === 'type') {                       // at the keyboard
+      hold(r, -.15, .12, -1.05); hold(l, -.15, .12, -1.05); U.look = .22;
+      U.anim = t => { r.e.rotation.x = -1.05 + Math.max(0, Math.sin(t * 15)) * .09; l.e.rotation.x = -1.05 + Math.max(0, Math.sin(t * 15 + 1.7)) * .09 };
+    } else if (kind === 'write') {               // clipboard + pen
+      hold(l, -.35, .32, -1.3); hold(r, -.3, .38, -1.2); U.look = .32;
+      const b = board(.3, .4, M(0x3a2c24), 1.36, .43, .55); box(.26, .01, .34, M(0xf3efeb), 0, .018, .01, b);
+      cyl(.012, .012, .16, 5, M(0xe42b0c), 0, -.02, .06, r.h).rotation.x = .9;
+      U.anim = t => { r.a.rotation.z = -.38 + Math.sin(t * 6) * .05; r.e.rotation.x = -1.2 + Math.sin(t * 9) * .05 };
+    } else if (kind === 'read') {                // open book
+      hold(r, -.35, .3, -1.35); hold(l, -.35, .3, -1.35); U.look = .34;
+      const b = new T.Group(); b.position.set(0, 1.4, .44); b.rotation.x = .75; g.add(b);
+      for (const s of [-1, 1]) { const c = box(.19, .02, .27, M(0x8e1d0b), s * .095, 0, 0, b); c.rotation.z = -s * .22; const pg = box(.17, .012, .25, M(0xf3efeb), s * .09, .02, 0, b); pg.rotation.z = -s * .22 }
+      U.anim = t => { b.rotation.x = .75 + Math.sin(t * .8) * .04 };
+    } else if (kind === 'tablet') {              // checking the calendar on a tablet
+      hold(l, -.38, .3, -1.3); hold(r, -.3, .42, -1.15); U.look = .3;
+      const b = board(.26, .36, M(0x111010), 1.37, .43, .6); box(.22, .01, .3, M(0x1a120e, {emissive: 0xff8a3d, emissiveIntensity: .7}), 0, .015, 0, b);
+      U.anim = t => { r.e.rotation.x = -1.15 - Math.max(0, Math.sin(t * 3.2)) * .12 };
+    } else if (kind === 'coffee') {              // sipping a coffee, other hand in the pocket
+      hold(r, -.2, .1, -1.4); set(l, .2, l.s * .3, .35, -l.s * .5);
+      const c = new T.Group(); c.position.set(0, -.02, .07); r.h.add(c);
+      cyl(.075, .058, .2, 8, M(0xc79a6a), 0, .02, 0, c); cyl(.08, .08, .035, 8, dark, 0, .14, 0, c);
+      U.anim = t => { const k = Math.pow(Math.max(0, Math.sin(t * .9)), 6); r.a.rotation.x = -.2 - k * .55; r.e.rotation.x = -1.4 - k * .75; U.look = -k * .15;
+        c.rotation.x = -(r.a.rotation.x + r.e.rotation.x) };
+    } else if (kind === 'files') {               // carrying a pile of folders
+      hold(r, -.3, .36, -1.45); hold(l, -.3, .36, -1.45);
+      [[0xff8a3d, .02], [0xf3efeb, -.04], [0xb85a1e, .05], [0xffc38a, -.02]].forEach(([c, rot], k) => { const f = box(.38, .045, .28, M(c), 0, 1.36 + k * .05, .36); f.rotation.y = rot; g.add(f) });
+    } else if (kind === 'wave') {                // waving, a small gift in the other hand
+      set(r, 0, r.s * 2.45, 0); hold(l, -.25, -.05, -1.0);
+      box(.14, .14, .14, M(0xff8a3d), 0, -.04, .08, l.h); box(.15, .03, .04, M(0xffc38a), 0, .03, .08, l.h);
+      U.anim = t => { r.e.rotation.z = Math.sin(t * 6) * .4 - .15; r.a.rotation.z = r.s * 2.45 + Math.sin(t * 6) * .05 };
+    } else if (kind === 'phone') {               // on the phone, free hand talking
+      set(r, -.25, r.s * .25, -.35, r.s * 2.75); hold(l, -.25, .1, -1.0);
+      box(.05, .17, .09, dark, 0, -.02, .02, r.h);
+      U.anim = t => { l.a.rotation.x = -.25 + Math.sin(t * 1.4) * .14; l.e.rotation.x = -1.0 + Math.sin(t * 2.1) * .12; U.look = .05 };
+    }
+  }
+
+  function person(T, M, box, cyl, L, gender, act_) {
     const g = new T.Group(), f = gender === 'f', skin = M(SKIN), skinD = M(SKIN_D), shirt = M(L.shirt), under = M(L.under), pants = M(L.pants), shoe = M(L.shoe), hair = M(L.hair), dark = M(0x111010);
     const sw = f ? .9 : 1;  // slimmer frame
     // shoes + rolled cuffs
@@ -330,13 +413,13 @@ const TEAM = (() => {
     for (const s of [-1, 1]) { const p = box(.2 * sw, .62, .3, shirt, s * .16 * sw, 1.37, -.005, g); p.rotation.z = s * .04 }  // open shirt panels
     box(.5 * sw, .1, .3, shirt, 0, 1.64, -.01, g);                                              // shoulders/collar
     for (const s of [-1, 1]) { const c = box(.12, .04, .12, shirt, s * .1, 1.71, .1, g); c.rotation.y = s * .5 }
-    // arms: sleeve, forearm, hand
-    const arm = (s, cup) => { const a = new T.Group(); a.position.set(s * .32 * sw, 1.6, 0); g.add(a);
-      cyl(.085, .08, .3, 6, shirt, 0, -.13, 0, a); cyl(.062, .055, .34, 6, skin, 0, -.44, 0, a); box(.1, .12, .1, skinD, 0, -.66, .01, a);
-      if (cup) { a.rotation.x = -1.15; a.rotation.z = s * .12; const c = new T.Group(); c.position.set(0, -.68, .08); c.rotation.x = 1.15; a.add(c);
-        cyl(.075, .058, .2, 8, M(0xc79a6a), 0, .02, 0, c); cyl(.08, .08, .035, 8, dark, 0, .14, 0, c) }
-      else { a.rotation.z = s * .14; a.rotation.x = .1 } };
-    arm(1, !!L.cup); arm(-1, false);
+    // arms: shoulder -> elbow -> hand, so people can hold and do things
+    const arm = s => { const a = new T.Group(); a.position.set(s * .32 * sw, 1.6, 0); g.add(a); cyl(.085, .08, .3, 6, shirt, 0, -.13, 0, a);
+      const e = new T.Group(); e.position.y = -.27; a.add(e); cyl(.062, .055, .34, 6, skin, 0, -.17, 0, e);
+      const h = new T.Group(); h.position.y = -.39; e.add(h); box(.1, .12, .1, skinD, 0, 0, .01, h);
+      a.rotation.set(.1, 0, s * .14); return {a, e, h, s} };
+    const r = arm(1), l = arm(-1);
+    act(T, M, box, cyl, g, r, l, act_, dark);
     // neck + head
     cyl(.07, .08, .1, 6, skinD, 0, 1.73, 0, g);
     const head = new T.Group(); head.position.set(0, 1.95, 0); head.scale.setScalar(1.22); g.add(head); g.userData.head = head;
