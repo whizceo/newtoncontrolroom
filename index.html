@@ -298,7 +298,8 @@ svg text.big{font-family:var(--sans);font-weight:300;fill:#fff}
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="crm.js?v=20261104e"></script>
+<script src="crm.js?v=20261106a"></script>
+<script src="team.js?v=20261106a"></script>
 </head>
 <body>
 <div class="gate" id="gate"><form id="gf" autocomplete="on" onsubmit="return false">
@@ -799,6 +800,7 @@ const ICON = {
   activity: '<path d="M3 12h4l3-7 4 14 3-7h4"/>',
   pipeline: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
   contacts: '<circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21 20a6 6 0 0 0-4-5.6"/>',
+  team: '<circle cx="7" cy="8" r="2.6"/><circle cx="17" cy="8" r="2.6"/><circle cx="12" cy="6" r="2.8"/><path d="M2.5 19a4.5 4.5 0 0 1 8-2.8M21.5 19a4.5 4.5 0 0 0-8-2.8M7 20a5 5 0 0 1 10 0"/>',
   territory: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
   website: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
   integrations: '<path d="M9 7V3M15 7V3M7 7h10v4a5 5 0 0 1-10 0zM12 16v5"/>',
@@ -809,6 +811,7 @@ const PAGES = [
   // {id: 'content', label: 'LinkedIn content', src: 'content', fn: pContent},  // hidden until LinkedIn content is connected
   {id: 'pipeline', label: 'Pipeline', fn: () => CRM.page('pipeline')},
   {id: 'contacts', label: 'Contacts', fn: () => CRM.page('contacts')},
+  {id: 'team', label: 'Team', fn: () => CRM.page('team')},
   {id: 'territory', label: 'Territory', src: 'list', fn: pTerritory},
   // {id: 'website', label: 'Website', src: 'website', fn: pWebsite},  // hidden until the site is live
   {id: 'integrations', label: 'Integrations', fn: pIntegrations},

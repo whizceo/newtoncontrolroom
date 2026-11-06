@@ -579,6 +579,6 @@ const CRM = (() => {
     bindTasks(d.querySelector('[data-tasks]'), reopen);
   }
 
-  const VIEWS = {today, pipeline, contacts, tasks, activity};
+  const VIEWS = {today, pipeline, contacts, tasks, activity, team: () => TEAM.render(sb, V())};
   return {page};
 })();
