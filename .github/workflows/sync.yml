@@ -47,6 +47,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python stage_ai.py
       - name: Save snapshot to the repo
+        continue-on-error: true  # a clash with the next run is harmless: it saves 2 min later
         run: |
           git config user.name "evolv-sync"
           git config user.email "actions@users.noreply.github.com"
@@ -56,4 +57,12 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
-      - uses: actions/deploy-pages@v4
+      # GitHub Pages has short hiccups ~1/hour. Retry quietly; never email a "failed" run for them.
+      - id: deploy1
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - if: steps.deploy1.outcome == 'failure'
+        run: sleep 30
+      - if: steps.deploy1.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
