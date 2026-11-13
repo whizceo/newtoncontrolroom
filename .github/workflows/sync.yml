@@ -42,7 +42,7 @@ jobs:
           git config user.name "evolv-sync"
           git config user.email "actions@users.noreply.github.com"
           git add data.enc
-          git diff --cached --quiet || (git commit -m "sync: $(date -u +%FT%H:%MZ)" && git pull --rebase -q && git push)
+          git diff --cached --quiet || (git commit -m "sync: $(date -u +%FT%H:%MZ)" && git pull --rebase -X theirs -q && git push)
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
