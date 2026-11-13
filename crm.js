@@ -227,6 +227,7 @@ const CRM = (() => {
     ]);
     if (error) { v.innerHTML = empty(error.message); return }
     const deals = data || [], open = deals.filter(d => !d.lost_reason), by = {};
+    deals.sort((a, b) => (+b.value_estimate || 0) - (+a.value_estimate || 0) || String(b.updated_at).localeCompare(String(a.updated_at)));
     deals.forEach(d => (by[d.stage] ||= []).push(d));
     const val = sum(open.map(d => ({v: +d.value_estimate || 0})), 'v'), valued = open.filter(d => +d.value_estimate > 0).length;
     const live = new Set(open.map(d => d.contacts && d.contacts.id)), waiting = (waitingRows || []).filter(x => live.has(x.id));  // open deals only: lost / listed elsewhere never shows
