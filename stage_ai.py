@@ -84,7 +84,8 @@ def clean(txt):
 def render(items, owner_email):
     out = []
     for x in items[-14:]:
-        who = "OWNER" if x.get("ue_type") == 2 else "ISSAC"  # 2 = received; 1 campaign, 3 sent by hand
+        t = x.get("ue_type")  # 2 = received; 1 = automated campaign step; 3 = written by hand
+        who = "OWNER" if t == 2 else ("ISSAC (written by hand)" if t == 3 else "AUTOMATED SEQUENCE EMAIL (template, sent to every owner)")
         body = clean((x.get("body") or {}).get("text") or re.sub("<[^>]+>", " ", (x.get("body") or {}).get("html") or ""))
         out.append(f"[{(x.get('timestamp_email') or '')[:16]}] {who} — {x.get('subject') or ''}\n{body or '(no text)'}")
     return "\n\n".join(out)
@@ -100,6 +101,11 @@ Seller pipeline stages, in order:
 {stages}
 
 Read the email conversation and decide the stage the emails PROVE. Be conservative: if unsure, keep the current stage.
+Read every message in full and judge what the owner and Issac actually SAID and DID, sentence by sentence, in context.
+Never decide from a single keyword (e.g. "value", "call", "number") taken out of context.
+AUTOMATED SEQUENCE EMAILs are templates sent to every owner: they are never evidence of a stage.
+Only the owner's replies and the emails Issac wrote by hand count as evidence.
+A promise ("I'll send", "would you like a call?") is not the event itself; only count what really happened or was agreed.
 Mark lost only if the owner clearly declined (not interested / sold already / stop emailing / wrong person).
 If a concrete next step exists (call time, documents to send, follow-up date), give it.
 
