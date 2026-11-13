@@ -108,7 +108,24 @@ Conversation (oldest first):
 
 Reply with JSON only:
 {{"stage": "<exact stage name>", "lost": false, "lost_reason": null, "next_action": "<short, or null>", "next_action_at": "<ISO 8601 with timezone, or null>", "why": "<one short line quoting the evidence>"}}"""
-    if os.getenv("ANTHROPIC_API_KEY"):
+    if os.getenv("GEMINI_API_KEY"):
+        err = None
+        models = os.getenv("STAGE_AI_MODELS", "gemini-3.8-flash,gemini-3.7-flash,gemini-3.5-flash,gemini-flash-latest,gemini-3.5-flash-lite,gemini-flash-lite-latest").split(",")
+        for k, m in enumerate(models * 2):
+            if k and k % len(models) == 0:
+                time.sleep(20)  # free tier busy → wait, one more round
+            try:  # busy / daily free limit (20 per model) hit → next model
+                j = http(f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent",
+                         {"x-goog-api-key": os.environ["GEMINI_API_KEY"], "Content-Type": "application/json"},
+                         {"contents": [{"parts": [{"text": prompt}]}],
+                          "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}})
+                text = j["candidates"][0]["content"]["parts"][0]["text"]
+                break
+            except Exception as e:
+                err = e
+        else:
+            raise err
+    elif os.getenv("ANTHROPIC_API_KEY"):
         j = http("https://api.anthropic.com/v1/messages",
                  {"x-api-key": os.environ["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01", "content-type": "application/json"},
                  {"model": os.getenv("STAGE_AI_MODEL", "claude-sonnet-5-5"), "max_tokens": 400,
@@ -124,7 +141,7 @@ Reply with JSON only:
 
 
 def main():
-    if not (os.getenv("ANTHROPIC_API_KEY") or os.getenv("OPENROUTER_API_KEY")) and not DUMP:
+    if not (os.getenv("GEMINI_API_KEY") or os.getenv("ANTHROPIC_API_KEY") or os.getenv("OPENROUTER_API_KEY")) and not DUMP:
         print("stage_ai: no AI key set — skipped"); return
     state = json.loads(STATE.read_text()) if STATE.exists() else {}
     deals = sb("GET", "deals?select=id,stage,lost_reason,next_action,contact_id,contacts(email,full_name,company)"
@@ -155,6 +172,8 @@ def main():
         if calls >= MAX_AI:
             break
         calls += 1
+        if calls > 1:
+            time.sleep(int(os.getenv("STAGE_AI_PACE", "6")))  # stay under the free per-minute limit
         try:
             r = ask_ai(c.get("full_name"), c.get("company"), d["stage"], render(items, email))
         except Exception as e:
@@ -182,6 +201,7 @@ def main():
                 sb("POST", "activities", {"contact_id": d["contact_id"], "type": "stage_change", "subject": "Stage update",
                                           "body": note[:500], "source": "ai", "ext_id": f"{d['id']}:{last}", "created_by": "AI"})
             state[d["id"]] = last
+            STATE.write_text(json.dumps(state, indent=0, sort_keys=True))  # save as we go (a timeout keeps progress)
     if DUMP:
         Path(DUMP).write_text(json.dumps(dump, indent=1)); print("dumped", len(dump)); return
     if not DRY:

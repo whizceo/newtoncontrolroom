@@ -39,12 +39,12 @@ jobs:
         run: python sync.py
       - name: Move owners to the stage their Instantly emails prove
         continue-on-error: true
-        timeout-minutes: 6
+        timeout-minutes: 8
         env:
           INSTANTLY_API_KEY: ${{ secrets.INSTANTLY_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python stage_ai.py
       - name: Save snapshot to the repo
         run: |
